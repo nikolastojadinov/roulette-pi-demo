@@ -1,30 +1,28 @@
 
-// netlify/functions/piProxy.js
-
-exports.handler = async function (event, context) {
+export async function handler(event, context) {
   try {
-    const response = await fetch("https://api.minepi.com/v2/me", {
-      headers: {
-        "Authorization": "Bearer qhhwpcgqxluzb8ezdgjpdbkkylmrnm80b6dwpmeel3wqn7hvz3zi8lb8vd0dc9o1"
-      }
-    });
-
-    if (!response.ok) {
+    const apiKey = process.env.PI_API_KEY; // Uzimamo iz Netlify okruženja
+    if (!apiKey) {
       return {
-        statusCode: response.status,
-        body: JSON.stringify({ ok: false, msg: "Error from Pi API" })
+        statusCode: 500,
+        body: JSON.stringify({ ok: false, msg: "Missing PI_API_KEY in environment" }),
       };
     }
 
+    const response = await fetch("https://api.minepi.com/v2/me", {
+      headers: { Authorization: `Key ${apiKey}` },
+    });
+
     const data = await response.json();
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ ok: true, data })
+      body: JSON.stringify({ ok: true, data }),
     };
   } catch (error) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ ok: false, msg: error.message })
+      body: JSON.stringify({ ok: false, msg: error.message }),
     };
   }
-};
+}
