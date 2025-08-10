@@ -1,30 +1,30 @@
-const API_KEY = "qhhwpcgqxluzb8ezdgjpdbkkylmrnm80b6dwpmeel3wqn7hvz3zi8lb8vd0dc9o1";
 
-export async function handler(event) {
+// netlify/functions/piProxy.js
+
+exports.handler = async function (event, context) {
   try {
-    const res = await fetch("https://api.minepi.com/v2/me", {
-      headers: { "Authorization": `Key ${API_KEY}` }
+    const response = await fetch("https://api.minepi.com/v2/me", {
+      headers: {
+        "Authorization": "Bearer qhhwpcgqxluzb8ezdgjpdbkkylmrnm80b6dwpmeel3wqn7hvz3zi8lb8vd0dc9o1"
+      }
     });
 
-    const text = await res.text();
+    if (!response.ok) {
+      return {
+        statusCode: response.status,
+        body: JSON.stringify({ ok: false, msg: "Error from Pi API" })
+      };
+    }
 
+    const data = await response.json();
     return {
-      statusCode: res.status,
-      headers: {
-        "content-type": "application/json",
-        "access-control-allow-origin": "*"
-      },
-      body: JSON.stringify({
-        status: res.status,
-        ok: res.ok,
-        sample: text.slice(0, 200)
-      })
+      statusCode: 200,
+      body: JSON.stringify({ ok: true, data })
     };
-  } catch (e) {
+  } catch (error) {
     return {
       statusCode: 500,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ ok: false, error: e.message })
+      body: JSON.stringify({ ok: false, msg: error.message })
     };
   }
-}
+};
