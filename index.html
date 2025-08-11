@@ -1,33 +1,39 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Roulette — Pi API demo (Netlify Functions)</title>
-    <style>
-      :root { --bg:#111; --fg:#eee; --muted:#aaa; --accent:#ffd54a; --card:#1a1a1a; }
-      html,body{height:100%}
-      body{margin:0;background:var(--bg);color:var(--fg);font:16px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;display:flex;align-items:center;justify-content:center}
-      .wrap{max-width:720px;padding:24px}
-      h1{font-size:clamp(20px,5vw,36px);margin:0 0 8px}
-      p{color:var(--muted);line-height:1.5}
-      .card{background:var(--card);border:1px solid #222;border-radius:14px;padding:18px;margin-top:16px}
-      button{background:var(--accent);color:#000;font-weight:600;border:0;border-radius:10px;padding:14px 18px;cursor:pointer}
-      pre{margin:0;overflow:auto;white-space:pre-wrap;word-break:break-word}
-      code{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;}
-    </style>
-  </head>
-  <body>
-    <div class="wrap">
-      <h1>Roulette — Pi API demo</h1>
-      <p>Minimal demo sa Netlify Functions. Klikni dugme da pozoveš serverless funkciju.</p>
-      <button id="btn">Testiraj funkciju</button>
-
-      <div class="card" style="margin-top:16px">
-        <pre><code id="out">Spremno. Klikni dugme iznad…</code></pre>
+<html lang="sr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>European Roulette — Demo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="stage">
+    <aside class="chipbar" id="chipbar">
+      <button class="chip" data-chip="1">1</button>
+      <button class="chip" data-chip="5">5</button>
+      <button class="chip" data-chip="10">10</button>
+      <button class="chip" data-chip="25">25</button>
+      <button class="chip" data-chip="100">100</button>
+    </aside>
+    <section class="wheel-box">
+      <div class="pin"></div>
+      <canvas id="wheel" width="560" height="560"></canvas>
+      <canvas id="ball" width="560" height="560" class="ballCanvas"></canvas>
+    </section>
+    <section class="table-box">
+      <div id="table" class="table"></div>
+      <div class="table-actions">
+        <button id="btnClear" class="ghost">Clear</button>
+        <button id="btnUndo" class="ghost">Undo</button>
+        <button id="btnSpin" class="spin">SPIN</button>
       </div>
-    </div>
-
-    <script src="./script.js"></script>
-  </body>
+    </section>
+  </main>
+  <footer class="footer">
+    <div class="stat">BALANCE <strong id="balance">£100.00</strong></div>
+    <div class="stat">TOTAL <strong id="total">£0.00</strong></div>
+  </footer>
+  <div class="toast" id="toast">Ready</div>
+  <script src="app.js"></script>
+</body>
 </html>
