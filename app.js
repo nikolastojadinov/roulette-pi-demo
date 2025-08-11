@@ -18,10 +18,14 @@ function setCanvasSize(size){
   R_TEXT=Math.floor(size*0.40);
   R_BALL=Math.floor(size*0.49);
 }
+
+// *** HOT-FIX: točak zauzima razumnu visinu, nema ogromne praznine ***
 function resizeWheel(){
   const box=document.querySelector('.wheel-box');
-  const size=Math.max(320, Math.min(box.clientWidth-20, window.innerHeight*0.45, 860));
-  setCanvasSize(size); drawWheel(); drawBall(0);
+  const w = (box.getBoundingClientRect().width || 360);
+  const size = Math.floor(Math.max(260, Math.min(w-20, window.innerHeight*0.38, 860)));
+  setCanvasSize(size);
+  drawWheel(); drawBall(0);
 }
 window.addEventListener('resize', resizeWheel);
 window.addEventListener('orientationchange', ()=>setTimeout(resizeWheel,80));
@@ -101,37 +105,35 @@ function money(x){ return '£'+x.toFixed(2); }
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 900); }
 function updateFooter(){ document.getElementById('balance').textContent=money(balance); document.getElementById('total').textContent=money(totalBet); }
 
-// ispravan raspored brojeva na stolu
+// ispravan raspored brojeva na stolu (evropski)
 function buildTable(){
   const grid=document.createElement('div'); grid.className='grid'; table.appendChild(grid);
 
   // kolona 0 (vertikalno 3 reda)
   const zero=cell('0','zero'); zero.dataset.bet=JSON.stringify({betType:'number',selection:0}); grid.appendChild(zero);
 
-  // 12 kolona × 3 reda
+  // 12 kolona × 3 reda  (gore: 3,6,9,...; sredina: 2,5,8,...; dole: 1,4,7,...)
   for(let c=0;c<12;c++){
     const top   = 3 + c*3;
     const mid   = 2 + c*3;
     const bottom= 1 + c*3;
-
     grid.appendChild(numCell(top));
     grid.appendChild(numCell(mid));
     grid.appendChild(numCell(bottom));
   }
 
-  // desno "2to1" za svaku vrstu (3 reda)
+  // desno "2to1" tri polja (za redove)
   for(let r=0;r<3;r++){
     const d=cell('2to1','twoToOne'); d.dataset.bet=JSON.stringify({betType:'column', selection:r+1});
     grid.appendChild(d);
   }
 
-  // DOZENS (ispod – preko 12 kolona)
+  // DOZENS
   const rowDoz=document.createElement('div'); rowDoz.className='row-dozens';
   const d1=cell('1st 12','label'), d2=cell('2nd 12','label'), d3=cell('3rd 12','label');
   d1.dataset.bet=JSON.stringify({betType:'dozen',selection:1});
   d2.dataset.bet=JSON.stringify({betType:'dozen',selection:2});
   d3.dataset.bet=JSON.stringify({betType:'dozen',selection:3});
-  // svaka zauzima 4 "broj" kolone
   d1.style.gridColumn='span 4'; d2.style.gridColumn='span 4'; d3.style.gridColumn='span 4';
   rowDoz.append(d1,d2,d3);
   table.appendChild(rowDoz);
@@ -173,7 +175,7 @@ document.querySelectorAll('.chips .chip').forEach(ch=>{
 });
 document.querySelector('.chips .chip[data-chip="1"]').classList.add('active');
 
-// Netlify spin API (GET bez opklada; POST sa opkladama)
+// Netlify spin API
 async function callSpin(bets){
   const body = bets && bets.length
     ? (bets.length===1 ? {...bets[0].bet, stake:bets[0].stake}
