@@ -8,6 +8,7 @@
 </head>
 <body>
   <main class="stage">
+    <!-- Žetoni -->
     <aside class="chipbar" id="chipbar">
       <button class="chip" data-chip="1">1</button>
       <button class="chip" data-chip="5">5</button>
@@ -15,11 +16,16 @@
       <button class="chip" data-chip="25">25</button>
       <button class="chip" data-chip="100">100</button>
     </aside>
+
+    <!-- Točak -->
     <section class="wheel-box">
       <div class="pin"></div>
-      <canvas id="wheel" width="560" height="560"></canvas>
-      <canvas id="ball" width="560" height="560" class="ballCanvas"></canvas>
+      <!-- NEMA width/height atributa — JS postavlja po veličini ekrana -->
+      <canvas id="wheel"></canvas>
+      <canvas id="ball" class="ballCanvas"></canvas>
     </section>
+
+    <!-- Sto -->
     <section class="table-box">
       <div id="table" class="table"></div>
       <div class="table-actions">
@@ -29,11 +35,14 @@
       </div>
     </section>
   </main>
+
   <footer class="footer">
     <div class="stat">BALANCE <strong id="balance">£100.00</strong></div>
     <div class="stat">TOTAL <strong id="total">£0.00</strong></div>
   </footer>
+
   <div class="toast" id="toast">Ready</div>
+
   <script src="app.js"></script>
 </body>
 </html>
