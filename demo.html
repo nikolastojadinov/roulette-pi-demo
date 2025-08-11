@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roulette demo</title>
+  <style>
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:#0b0b0b; color:#eee; }
+    .wrap { max-width: 720px; margin: 40px auto; padding: 0 16px; }
+    .card { background:#161616; border:1px solid #2a2a2a; border-radius:12px; padding:18px; margin-top:16px; }
+    button { border:0; padding:12px 16px; border-radius:10px; cursor:pointer; font-weight:600; }
+    .primary { background:#ffd023; }
+    input, select { background:#0e0e0e; color:#eee; border:1px solid #2a2a2a; border-radius:8px; padding:8px; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:12px; }
+    .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    pre { white-space:pre-wrap; background:#0e0e0e; border:1px solid #2a2a2a; border-radius:10px; padding:12px; }
+    .pill { display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid #2a2a2a; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Roulette — Netlify Functions</h1>
+    <div class="card">
+      <h3>Spin bez opklade</h3>
+      <div class="row">
+        <button class="primary" id="btnSpin">Zavrti</button>
+        <span id="last" class="pill">—</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Jednostavna opklada</h3>
+      <div class="grid">
+        <div>
+          <label>Tip</label>
+          <select id="betType">
+            <option value="color">color</option>
+            <option value="number">number</option>
+            <option value="evenOdd">evenOdd</option>
+            <option value="dozen">dozen</option>
+            <option value="column">column</option>
+            <option value="lowHigh">lowHigh</option>
+          </select>
+        </div>
+        <div>
+          <label>Selection</label>
+          <input id="selection" placeholder="red | 17 | even | 1 | 3 | high">
+        </div>
+        <div>
+          <label>Stake</label>
+          <input id="stake" type="number" min="1" value="5">
+        </div>
+      </div>
+      <div class="row">
+        <button class="primary" id="btnBet">Pošalji opkladu</button>
+        <span id="betSummary" class="pill">—</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Rezultat</h3>
+      <pre id="out">{}</pre>
+    </div>
+  </div>
+
+  <script>
+    const out = (obj) => document.querySelector('#out').textContent = JSON.stringify(obj, null, 2);
+
+    async function callSpin(body){
+      const res = await fetch('/.netlify/functions/spin', {
+        method: body ? 'POST' : 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : undefined
+      });
+      const data = await res.json();
+      // kratki prikaz na vrhu
+      const r = data.result || {};
+      document.querySelector('#last').textContent = `#${r.number ?? '—'} ${r.color ?? ''}`.trim();
+      return data;
+    }
+
+    document.querySelector('#btnSpin').addEventListener('click', async ()=>{
+      const data = await callSpin();
+      out(data);
+    });
+
+    document.querySelector('#btnBet').addEventListener('click', async ()=>{
+      // čitanje i korekcija tipova
+      const betType = document.querySelector('#betType').value;
+      let selection = document.querySelector('#selection').value.trim();
+      const stake = Number(document.querySelector('#stake').value);
+
+      // pretvaranje u broj kada treba
+      if (['number','dozen','column'].includes(betType)) selection = Number(selection);
+
+      const body = { betType, selection, stake };
+      const data = await callSpin(body);
+      const b = (data.bets && data.bets[0]) || {};
+      document.querySelector('#betSummary').textContent =
+        b.win === true ? `Pobeda +${b.profit}` :
+        b.win === false ? `Gubitak ${b.profit}` : '—';
+      out(data);
+    });
+  </script>
+</body>
+</html>
