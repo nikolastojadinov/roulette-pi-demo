@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roulette — Animirani spin</title>
+  <style>
+    :root { --bg:#0b0b0b; --panel:#151515; --edge:#2a2a2a; --txt:#eee; --accent:#ffd023; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--txt); font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    .wrap { max-width: 900px; margin: 32px auto; padding: 0 16px; }
+    h1 { margin: 12px 0 6px; }
+    .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    button { border:0; padding:12px 18px; border-radius:12px; background:var(--accent); font-weight:700; cursor:pointer; }
+    .card { background:var(--panel); border:1px solid var(--edge); border-radius:16px; padding:16px; margin-top:16px; }
+
+    /* Kolo */
+    .stage { margin:auto; position:relative; width: min(92vw, 440px); aspect-ratio:1; }
+    .pin { position:absolute; left:50%; top:-8px; width:0; height:0; border-left:8px solid transparent; border-right:8px solid transparent; border-bottom:14px solid var(--accent); transform: translateX(-50%); z-index:3; filter: drop-shadow(0 0 4px rgba(0,0,0,.5)); }
+    .rim { position:absolute; inset:0; border-radius:50%; background: radial-gradient(closest-side, #0e0e0e 72%, #222 72%, #222 74%, #000 74% 76%, #333 76% 78%, #111 78% 100%); }
+    .wheel { position:absolute; inset:6% 6% 6% 6%; border-radius:50%;
+      background:#111; display:grid; place-items:center; overflow:hidden;
+      transition: transform 5s cubic-bezier(.17,.84,.26,.99); /* menja se JS-om */
+    }
+    .hub { position:absolute; width:28%; aspect-ratio:1; border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, #444, #222 60%, #111 70%);
+      z-index:2; border:1px solid #000;
+    }
+
+    /* Brojevi oko oboda */
+    .nums { position:absolute; inset:0; }
+    .nums span{
+      position:absolute; left:50%; top:50%; transform-origin:0 -42%;
+      font-size: clamp(10px, 2.6vw, 14px); font-weight:700; letter-spacing:.3px;
+      padding:.15rem .25rem; border-radius:8px; user-select:none;
+    }
+    .nums .red   { color:#ff5a5a; }
+    .nums .black { color:#cfcfcf; }
+
+    /* status */
+    .pill { display:inline-block; padding:6px 10px; border:1px solid var(--edge); border-radius:999px; }
+    pre { white-space:pre-wrap; background:#0f0f0f; border:1px solid var(--edge); border-radius:12px; padding:12px; overflow:auto; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Roulette — Animirani spin</h1>
+    <div class="row"><button id="btn">Zavrti</button><span id="status" class="pill">Spreman</span></div>
+
+    <div class="card">
+      <div class="stage">
+        <div class="pin"></div>
+        <div class="rim"></div>
+        <div id="wheel" class="wheel" aria-label="roulette wheel">
+          <div class="nums" id="nums"></div>
+          <div class="hub"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Rezultat</h3>
+      <div class="row">
+        <div class="pill" id="short">—</div>
+      </div>
+      <pre id="out">{}</pre>
+    </div>
+  </div>
+
+  <script>
+    // Redosled brojeva na evropskom točku (u smeru kazaljke na satu)
+    const ORDER = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+    const REDS  = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+    const wedge = 360 / ORDER.length; // ≈ 9.7297°
+
+    // Iscrtavanje etiketa oko oboda
+    const numsEl = document.getElementById('nums');
+    ORDER.forEach((n, i) => {
+      const s = document.createElement('span');
+      s.textContent = String(n);
+      s.className = n === 0 ? '' : (REDS.has(n) ? 'red' : 'black');
+      const deg = i * wedge; // rotacija elementa
+      s.style.transform = `translate(-50%,-50%) rotate(${deg}deg) translateY(-48%) rotate(${-deg}deg)`;
+      numsEl.appendChild(s);
+    });
+
+    const wheel = document.getElementById('wheel');
+    let currentTurns = 0; // broj punih krugova do sada (da izbegnemo "skok")
+
+    function angleForNumber(n){
+      const idx = ORDER.indexOf(n);
+      // Želimo da indeks n dođe NA VRH (kod igle). Kako je "0deg" na vrhu,
+      // treba rotirati točak tako da se taj indeks poravna na 0deg.
+      // Zato cilj = -(idx*wedge) + mala korekcija u centar polja (wedge/2)
+      return -(idx * wedge) - (wedge/2);
+    }
+
+    async function spin() {
+      document.getElementById('status').textContent = 'Pozivam funkciju...';
+      const res = await fetch('/.netlify/functions/spin');
+      const data = await res.json();
+
+      const n = data?.result?.number ?? 0;
+      const color = data?.result?.color ?? '';
+      const target = angleForNumber(n);
+
+      // Napravi lepu animaciju: nekoliko punih krugova + ciljni ugao
+      const extraTurns = 6; // koliko punih krugova (lep osećaj)
+      currentTurns += extraTurns;
+      const totalDeg = currentTurns * 360 + target;
+
+      // trigger animacije
+      wheel.style.transition = 'transform 5s cubic-bezier(.17,.84,.26,.99)';
+      wheel.style.transform = `rotate(${totalDeg}deg)`;
+
+      document.getElementById('status').textContent = 'Vrti se...';
+      // pričekaj kraj tranzicije
+      await new Promise(r => setTimeout(r, 5100));
+
+      // stabilizuj da ne "beži" posle više spinova
+      currentTurns = currentTurns % 10; // držimo broj okreta razumljivim
+      wheel.style.transition = 'none';
+      wheel.style.transform = `rotate(${target}deg)`;
+
+      // prikaži rezultat
+      document.getElementById('status').textContent = 'Gotovo';
+      document.getElementById('short').textContent = `#${n} ${color}`;
+      document.getElementById('out').textContent = JSON.stringify(data, null, 2);
+    }
+
+    document.getElementById('btn').addEventListener('click', () => {
+      // mala zaštita: ako je animacija u toku, ignoriši klik (5.1s)
+      if (wheel.style.transition && wheel.style.transition.includes('transform')) return;
+      spin().catch(e => {
+        document.getElementById('status').textContent = 'Greška';
+        document.getElementById('out').textContent = String(e);
+      });
+    });
+
+    // Inicijalno poravnaj na "0"
+    wheel.style.transform = `rotate(${angleForNumber(0)}deg)`;
+  </script>
+</body>
+</html>
