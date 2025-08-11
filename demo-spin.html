@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Roulette — Spin demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #111;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    button {
+      background-color: gold;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    pre {
+      background: #222;
+      padding: 10px;
+      border-radius: 5px;
+      max-width: 90%;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Roulette — Spin demo</h1>
+  <p>Klikni na dugme da pozoveš <code>spin.js</code> Netlify funkciju.</p>
+
+  <button id="btnSpin">Zavrti rulet</button>
+
+  <h3>Rezultat:</h3>
+  <pre id="output">Čeka se...</pre>
+
+  <script>
+    document.getElementById('btnSpin').addEventListener('click', async () => {
+      document.getElementById('output').textContent = "Okrećem...";
+      try {
+        const res = await fetch('/.netlify/functions/spin');
+        const data = await res.json();
+        document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        document.getElementById('output').textContent = 'Greška: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
