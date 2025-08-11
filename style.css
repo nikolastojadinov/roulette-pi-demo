@@ -1,70 +1,29 @@
-:root{
-  --felt:#126b33; --felt-dark:#0f592a; --panel:#0e0e0e; --edge:#2a2a2a;
-  --text:#f2f2f2; --gold:#d8a44c; --accent:#ffd23f; --red:#a81f1f; --black:#121212; --green:#0e9248;
+/* GRID: uvek tri kolone (chips | table | spin) u landscape;
+   u portrait sve ide u jedan stupac, ali chips stoje LEVO od stola (absolute). */
+.table-wrap{
+  max-width:1200px;margin:0 auto;
+  display:grid;grid-template-columns:90px 1fr 120px;
+  gap:12px;align-items:start;padding:8px 12px;position:relative;
 }
-*{box-sizing:border-box}
-html,body{height:100%}
-body{margin:0;background:#0b0b0b;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+@media (orientation:portrait){
+  .table-wrap{grid-template-columns:1fr}
+  .chips{position:absolute; left:-64px; top:6px;}  /* žetoni uvek levo od stola */
+  .spin-side{position:absolute; right:-90px; top:6px;} /* SPIN desno od stola */
+}
 
-.topbar{display:flex;align-items:center;justify-content:center;padding:8px 12px;background:#111;border-bottom:1px solid #1d1d1d}
-.brand{font-weight:900;letter-spacing:.4px}
-
-/* WHEEL gore */
+/* Točak: ne dozvoli ogromnu prazninu; veličina = širina box-a */
 .wheel-wrap{display:flex;justify-content:center;padding:8px 12px}
 .wheel-box{position:relative;background:#101010;border:1px solid #222;border-radius:16px;padding:10px;max-width:860px;width:100%}
-.pin{position:absolute;left:50%;top:6px;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:18px solid var(--accent);z-index:3}
 #wheel,.ballCanvas{width:100%;height:auto;display:block;border-radius:14px;background:#0f0f0f}
 .ballCanvas{position:absolute;left:10px;top:10px;pointer-events:none}
 
-/* TABLE ispod: tri kolone — chips | table | spin */
-.table-wrap{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:90px 1fr 120px;gap:12px;align-items:start;padding:8px 12px}
-@media(max-width:1000px){ .table-wrap{grid-template-columns:70px 1fr 100px} }
-@media(max-width:760px){ .table-wrap{grid-template-columns:1fr; } .spin-side{order:3; display:flex; justify-content:center; margin-top:10px} .chips{order:2; flex-direction:row; justify-content:center} }
-
-.chips{display:flex;flex-direction:column;gap:10px;align-items:center}
-.chip{width:56px;height:56px;border-radius:50%;background:var(--accent);border:4px solid var(--gold);color:#222;font-weight:900;cursor:pointer}
-.chip.active{outline:4px solid #fff}
-
+/* Sto kompaktan na mobilnom */
 .table-box{background:#0f0f0f;border:1px solid #222;border-radius:16px;padding:10px}
-.table{position:relative;background:
-   radial-gradient(120% 100% at 50% 0%, rgba(255,255,255,.08), rgba(255,255,255,0) 38%),
-   var(--felt);
-   border-radius:14px;padding:10px;box-shadow:inset 0 10px 25px rgba(0,0,0,.35)}
-/* GRID  —  0 | 12 numbers | 2to1  =>  14 kolona */
-.table .grid{display:grid;grid-template-columns:repeat(14,1fr);gap:6px}
+.table .grid{display:grid;grid-template-columns:repeat(14,1fr);gap:4px}
+.cell{border:2px solid rgba(255,255,255,.35);border-radius:6px;aspect-ratio:1/0.8}
+.row-dozens,.row-outside{gap:4px;margin-top:6px}
+.table-actions{gap:8px;margin-top:8px}
 
-/* ćelije */
-.cell{background:rgba(0,0,0,.22);border:2px solid rgba(255,255,255,.35);border-radius:6px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;cursor:pointer;aspect-ratio:1/0.8}
-.cell.red{background:var(--red)}
-.cell.black{background:var(--black)}
-.cell.zero{grid-row:1/4;grid-column:1/2;background:var(--green)}
-.cell.twoToOne{background:#0f5b2b}
-.cell.label{background:#0f5b2b}
-
-/* dozens i outside red (ispod brojeva) */
-.row-dozens,.row-outside{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;margin-top:8px}
-.row-dozens .cell{aspect-ratio:6/1}
-.row-outside .cell{aspect-ratio:6/1}
-.row-outside .diamond{font-size:18px}
-
-/* Spin dugme */
+/* Spin dugme veliko i fiksirano desno od stola */
 .spin-side{display:flex;justify-content:center}
-.btn-spin{width:96px;height:96px;border-radius:50%;border:0;background:var(--accent);color:#222;font-weight:900;box-shadow:0 6px 0 #b89a3c, 0 10px 22px rgba(0,0,0,.35);cursor:pointer}
-
-/* tasteri ispod stola */
-.table-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:10px}
-.ghost{background:#1a1a1a;border:1px solid #444;color:#ddd;border-radius:10px;padding:10px 14px;cursor:pointer}
-
-/* footer */
-.footer{position:sticky;bottom:0;background:#101010;border-top:1px solid #1f1f1f;color:#ddd;padding:10px 14px;display:flex;justify-content:space-between;gap:10px}
-.footer strong{color:#fff}
-
-/* landscape niski ekrani — skali sto da sve stane */
-@media (orientation: landscape) and (max-height: 430px){
-  .table-box{transform:scale(.92); transform-origin: top center;}
-  .btn-spin{transform:scale(.92)}
-}
-
-/* toast */
-.toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:10px 14px;border-radius:10px;opacity:0;transition:opacity .25s}
-.toast.show{opacity:1}
+.btn-spin{width:88px;height:88px;border-radius:50%;border:0;background:#ffd23f;color:#222;font-weight:900;box-shadow:0 6px 0 #b89a3c,0 10px 22px rgba(0,0,0,.35)}
