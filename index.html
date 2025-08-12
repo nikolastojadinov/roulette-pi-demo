@@ -1,59 +1,42 @@
-<!doctype html>
-<html lang="sr">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>European Roulette — Table & Wheel</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penny Roulette</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">European Roulette</div>
-  </header>
+    <div class="roulette-container">
+        <header>
+            <h1>Penny Roulette</h1>
+        </header>
+        <div class="wheel-container">
+            <canvas id="wheel" width="500" height="500"></canvas>
+            <button id="spin">SPIN</button>
+        </div>
 
-  <!-- WHEEL (gore) -->
-  <section class="wheel-wrap">
-    <div class="wheel-box">
-      <div class="pin"></div>
-      <!-- dimenzije postavlja JS (responsive) -->
-      <canvas id="wheel"></canvas>
-      <canvas id="ball" class="ballCanvas"></canvas>
+        <div class="betting-table">
+            <div class="numbers-grid" id="numbersGrid">
+                <!-- Brojevi se generišu iz app.js -->
+            </div>
+            <div class="options">
+                <button data-bet="1st 12">1st 12</button>
+                <button data-bet="2nd 12">2nd 12</button>
+                <button data-bet="3rd 12">3rd 12</button>
+                <button data-bet="1-18">1 - 18</button>
+                <button data-bet="even">Even</button>
+                <button data-bet="odd">Odd</button>
+                <button data-bet="19-36">19 - 36</button>
+            </div>
+        </div>
+
+        <footer>
+            <div>BALANCE: £<span id="balance">100.00</span></div>
+            <div>TOTAL BET: £<span id="totalBet">0.00</span></div>
+        </footer>
     </div>
-  </section>
 
-  <!-- TABLE (ispod) -->
-  <main class="table-wrap">
-    <!-- chip stack levo -->
-    <aside class="chips">
-      <button class="chip" data-chip="1">1</button>
-      <button class="chip" data-chip="5">5</button>
-      <button class="chip" data-chip="10">10</button>
-      <button class="chip" data-chip="25">25</button>
-      <button class="chip" data-chip="100">100</button>
-    </aside>
-
-    <!-- sto u sredini -->
-    <section class="table-box">
-      <div id="table" class="table"></div>
-      <div class="table-actions">
-        <button id="btnClear" class="ghost">Clear</button>
-        <button id="btnUndo" class="ghost">Undo</button>
-      </div>
-    </section>
-
-    <!-- veliko okruglo SPIN dugme desno -->
-    <aside class="spin-side">
-      <button id="btnSpin" class="btn-spin">SPIN</button>
-    </aside>
-  </main>
-
-  <footer class="footer">
-    <div>YOUR BALANCE <strong id="balance">£100.00</strong></div>
-    <div>PLACE YOUR BETS</div>
-    <div>TOTAL BET <strong id="total">£0.00</strong></div>
-  </footer>
-
-  <div class="toast" id="toast">Ready</div>
-  <script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
