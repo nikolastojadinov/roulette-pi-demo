@@ -14,7 +14,9 @@ function colorOf(n){
 }
 
 let bankroll = 1000;
-let bets = {}; // { key: amount }
+let bets = {};            // { key: amount sum }
+let betsChips = {};       // { key: [chipDenoms...] }
+
 const chipSel = document.getElementById('chip');
 const bankrollEl = document.getElementById('bankroll');
 const totalBetEl = document.getElementById('totalBet');
@@ -40,9 +42,7 @@ const grid = document.getElementById('numberGrid');
       const cell = document.createElement('div');
       cell.className = 'cell';
       const col = colorOf(n);
-      if(col!=='green'){
-        cell.dataset.color = col;
-      }
+      if(col!=='green'){ cell.dataset.color = col; }
       cell.textContent = String(n);
       cell.dataset.key = 'n'+n;
       grid.appendChild(cell);
@@ -50,10 +50,12 @@ const grid = document.getElementById('numberGrid');
   }
 })();
 
+// ---- Chip-aware betting ----
 function addBet(key, amount){
   if(bankroll < amount) return;
   bankroll -= amount;
   bets[key] = (bets[key]||0) + amount;
+  (betsChips[key] = (betsChips[key]||[])).push(amount);
   renderBets();
 }
 
@@ -63,26 +65,41 @@ function clearBets(){
   for(const k in bets){ refunded += bets[k];}
   bankroll += refunded;
   bets = {};
+  betsChips = {};
   renderBets();
 }
 
 function renderBets(){
   bankrollEl.textContent = bankroll.toString();
   totalBetEl.textContent = Object.values(bets).reduce((a,b)=>a+b,0);
-  // reset stake bubbles
-  document.querySelectorAll('.cell').forEach(el=>{
-    el.querySelectorAll('.stake').forEach(s=>s.remove());
+
+  // remove previous chip elements and stake bubbles
+  document.querySelectorAll('.cell, .outside-bets .bet').forEach(el=>{
+    el.querySelectorAll('.stake, .chip, .chip-badge').forEach(s=>s.remove());
   });
-  // render number stakes
-  for(const [k,amt] of Object.entries(bets)){
-    if(k.startsWith('n')){
-      const el = [...document.querySelectorAll('.cell')].find(e=>e.dataset.key===k);
-      if(el){
-        const b = document.createElement('div');
-        b.className = 'stake';
-        b.textContent = amt;
-        el.appendChild(b);
-      }
+
+  // place chips on number cells and outside bet buttons
+  for(const [key, arr] of Object.entries(betsChips)){
+    const el = document.querySelector(`[data-key="${key}"]`) ||
+               document.querySelector(`[data-bet="${key}"]`);
+    if(!el) continue;
+
+    const maxShow = Math.min(3, arr.length);
+    for(let i=0;i<maxShow;i++){
+      const denom = arr[i];
+      const chip = document.createElement('div');
+      const isPurpleSpot = (el.dataset.color==='purple' || key==='purple');
+      chip.className = 'chip' + (isPurpleSpot ? ' purple' : '');
+      chip.style.setProperty('--dx', `${i*4}px`);
+      chip.style.setProperty('--dy', `${-i*4}px`);
+      chip.textContent = denom;
+      el.appendChild(chip);
+    }
+    if(arr.length > 3){
+      const badge = document.createElement('div');
+      badge.className = 'chip-badge';
+      badge.textContent = `+${arr.length - 3}`;
+      el.appendChild(badge);
     }
   }
 }
@@ -176,8 +193,8 @@ function spin(){
   const winningIndex = Math.floor(Math.random()*WHEEL_ORDER.length);
   const winningNumber = WHEEL_ORDER[winningIndex];
 
-  // compute target rotation so that winningIndex ends at 12 o'clock (pointer)
-  const targetAngle = (Math.PI/2) - (winningIndex * pocketAngle); // pointer at top
+  // rotation so winningIndex ends at 12 o'clock (pointer)
+  const targetAngle = (Math.PI/2) - (winningIndex * pocketAngle);
   const extraSpins = 6 + Math.floor(Math.random()*4); // 6-9 extra spins
   const startAngle = 0;
   const endAngle = targetAngle + extraSpins*2*Math.PI;
@@ -203,11 +220,9 @@ function spin(){
 
 document.getElementById('spin').addEventListener('click', spin);
 
-// Payouts
+// Helpers
 function numbersInColumn(col){ // 1..3
-  const arr=[];
-  for(let n=col; n<=36; n+=3) arr.push(n);
-  return arr;
+  const arr=[]; for(let n=col; n<=36; n+=3) arr.push(n); return arr;
 }
 
 function evaluate(winning){
@@ -222,9 +237,9 @@ function evaluate(winning){
   }
 
   // Dozens
-  if(bets['1st12']) if(winning>=1 && winning<=12) payout += bets['1st12'] * 2;
-  if(bets['2nd12']) if(winning>=13 && winning<=24) payout += bets['2nd12'] * 2;
-  if(bets['3rd12']) if(winning>=25 && winning<=36) payout += bets['3rd12'] * 2;
+  if(bets['1st12'] && winning>=1 && winning<=12) payout += bets['1st12'] * 2;
+  if(bets['2nd12'] && winning>=13 && winning<=24) payout += bets['2nd12'] * 2;
+  if(bets['3rd12'] && winning>=25 && winning<=36) payout += bets['3rd12'] * 2;
 
   // Columns
   const col1 = numbersInColumn(1);
@@ -250,18 +265,20 @@ function evaluate(winning){
 }
 
 function settle(winning){
+  const wager = Object.values(bets).reduce((a,b)=>a+b,0);
   const payout = evaluate(winning);
   bankroll += payout;
   lastNumberEl.textContent = winning;
   const c = colorOf(winning);
   lastColorEl.textContent = c.toUpperCase();
   lastColorEl.style.color = (c==='gold'? GOLD : (c==='purple'? PURPLE : GREEN));
-  lastPayoutEl.textContent = payout - Object.values(bets).reduce((a,b)=>a+b,0);
+  lastPayoutEl.textContent = payout - wager;
   bets = {};
+  betsChips = {};
   renderBets();
 }
 
-// Initialize outside bet button mapping for columns to hover hints
+// Label columns
 (function labelColumns(){
   const outs = document.querySelector('.outside-bets');
   const [c1,c2,c3] = outs.querySelectorAll('[data-bet^="col"]');
