@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Penny Roulette</title>
+  <title>Penny Roulette — UI Only</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -11,25 +11,80 @@
     <h1>Penny Roulette</h1>
   </header>
 
-  <section class="wheel-wrap">
-    <div class="wheel-box">
-      <div class="pin"></div>
-      <canvas id="wheel"></canvas>
-      <canvas id="ball" class="ball"></canvas>
-      <button id="btnSpin" class="spin-btn">SPIN</button>
+  <main class="stage">
+    <!-- Leva traka: žetoni -->
+    <aside class="chips">
+      <button class="chip">1</button>
+      <button class="chip">5</button>
+      <button class="chip">10</button>
+      <button class="chip">20</button>
+      <button class="chip">50</button>
+      <button class="chip">100</button>
+    </aside>
+
+    <!-- Centar: točak -->
+    <section class="wheel-wrap">
+      <div class="pin" aria-hidden="true"></div>
+      <div class="wheel" aria-label="roulette wheel"></div>
+      <div class="spin-cta">SPIN</div>
+    </section>
+
+    <!-- Desno: history / poslednji brojevi -->
+    <aside class="history">
+      <h3>History</h3>
+      <div class="history-row">
+        <span class="ball r">27</span><span class="ball b">10</span>
+        <span class="ball r">19</span><span class="ball b">4</span>
+        <span class="ball g">0</span>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Tabla sa opkladama -->
+  <section class="table">
+    <div class="grid" aria-label="betting layout">
+      <div class="cell zero">0</div>
+
+      <!-- redovi 3–2–1 kolone (samo UI) -->
+      <!-- 1. kolona -->
+      <div class="cell r">3</div><div class="cell b">2</div><div class="cell r">1</div>
+      <div class="cell b">6</div><div class="cell r">5</div><div class="cell b">4</div>
+      <div class="cell r">9</div><div class="cell b">8</div><div class="cell r">7</div>
+      <div class="cell b">12</div><div class="cell r">11</div><div class="cell b">10</div>
+      <div class="cell r">15</div><div class="cell b">14</div><div class="cell r">13</div>
+      <div class="cell b">18</div><div class="cell r">17</div><div class="cell b">16</div>
+      <div class="cell r">21</div><div class="cell b">20</div><div class="cell r">19</div>
+      <div class="cell b">24</div><div class="cell r">23</div><div class="cell b">22</div>
+      <div class="cell r">27</div><div class="cell b">26</div><div class="cell r">25</div>
+      <div class="cell b">30</div><div class="cell r">29</div><div class="cell b">28</div>
+      <div class="cell r">33</div><div class="cell b">32</div><div class="cell r">31</div>
+      <div class="cell b">36</div><div class="cell r">35</div><div class="cell b">34</div>
+
+      <!-- 2to1 (desno) -->
+      <div class="cell tag">2to1</div>
+      <div class="cell tag">2to1</div>
+      <div class="cell tag">2to1</div>
+    </div>
+
+    <div class="row dozens">
+      <div class="cell tag">1st 12</div>
+      <div class="cell tag">2nd 12</div>
+      <div class="cell tag">3rd 12</div>
+    </div>
+
+    <div class="row outside">
+      <div class="cell tag">1 - 18</div>
+      <div class="cell tag">Even</div>
+      <div class="cell tag diamond">◈</div>
+      <div class="cell tag">Odd</div>
+      <div class="cell tag">19 - 36</div>
     </div>
   </section>
 
-  <section class="table-wrap">
-    <div id="table" class="table"></div>
-  </section>
-
-  <footer class="status">
-    <div>YOUR BALANCE <strong id="balance">£100.00</strong></div>
+  <footer class="statusbar">
+    <div>YOUR BALANCE <strong>£100.00</strong></div>
     <div>PLACE YOUR BETS</div>
-    <div>TOTAL BET <strong id="total">£0.00</strong></div>
+    <div>TOTAL BET <strong>£0.00</strong></div>
   </footer>
-
-  <script src="app.js"></script>
 </body>
 </html>
