@@ -1,90 +1,68 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Penny Roulette — UI Only</title>
+  <title>Pi Roulette</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="topbar">
-    <h1>Penny Roulette</h1>
+  <header>
+    <h1>Pi Roulette</h1>
+    <div class="bankroll">
+      Bankroll: <span id="bankroll">1000</span>
+      <label>Chip:</label>
+      <select id="chip">
+        <option value="1">1</option>
+        <option value="5" selected>5</option>
+        <option value="25">25</option>
+        <option value="100">100</option>
+      </select>
+      <button id="clearBets" class="ghost">Clear Bets</button>
+    </div>
   </header>
 
-  <main class="stage">
-    <!-- Leva traka: žetoni -->
-    <aside class="chips">
-      <button class="chip">1</button>
-      <button class="chip">5</button>
-      <button class="chip">10</button>
-      <button class="chip">20</button>
-      <button class="chip">50</button>
-      <button class="chip">100</button>
-    </aside>
+  <main>
+    <section class="table-area">
+      <canvas id="wheel" width="480" height="480" aria-label="Roulette wheel"></canvas>
 
-    <!-- Centar: točak -->
-    <section class="wheel-wrap">
-      <div class="pin" aria-hidden="true"></div>
-      <div class="wheel" aria-label="roulette wheel"></div>
-      <div class="spin-cta">SPIN</div>
+      <div class="layout">
+        <div class="grid" id="numberGrid" aria-label="Betting grid"></div>
+
+        <div class="outside-bets">
+          <button data-bet="1st12" class="bet">1st 12</button>
+          <button data-bet="2nd12" class="bet">2nd 12</button>
+          <button data-bet="3rd12" class="bet">3rd 12</button>
+
+          <button data-bet="1to18" class="bet">1 to 18</button>
+          <button data-bet="even" class="bet">EVEN</button>
+          <button data-bet="gold" class="bet">GOLD</button>
+          <button data-bet="purple" class="bet">PURPLE</button>
+          <button data-bet="odd" class="bet">ODD</button>
+          <button data-bet="19to36" class="bet">19 to 36</button>
+
+          <button data-bet="col1" class="bet">2 to 1 ↥</button>
+          <button data-bet="col2" class="bet">2 to 1 ↥</button>
+          <button data-bet="col3" class="bet">2 to 1 ↥</button>
+        </div>
+      </div>
     </section>
 
-    <!-- Desno: history / poslednji brojevi -->
-    <aside class="history">
-      <h3>History</h3>
-      <div class="history-row">
-        <span class="ball r">27</span><span class="ball b">10</span>
-        <span class="ball r">19</span><span class="ball b">4</span>
-        <span class="ball g">0</span>
+    <section class="controls">
+      <button id="spin">SPIN</button>
+      <div class="status">
+        <div>Last number: <span id="lastNumber">—</span></div>
+        <div>Result color: <span id="lastColor">—</span></div>
+        <div>Total bet: <span id="totalBet">0</span></div>
+        <div>Win/Loss: <span id="lastPayout">0</span></div>
       </div>
-    </aside>
+    </section>
   </main>
 
-  <!-- Tabla sa opkladama -->
-  <section class="table">
-    <div class="grid" aria-label="betting layout">
-      <div class="cell zero">0</div>
-
-      <!-- redovi 3–2–1 kolone (samo UI) -->
-      <!-- 1. kolona -->
-      <div class="cell r">3</div><div class="cell b">2</div><div class="cell r">1</div>
-      <div class="cell b">6</div><div class="cell r">5</div><div class="cell b">4</div>
-      <div class="cell r">9</div><div class="cell b">8</div><div class="cell r">7</div>
-      <div class="cell b">12</div><div class="cell r">11</div><div class="cell b">10</div>
-      <div class="cell r">15</div><div class="cell b">14</div><div class="cell r">13</div>
-      <div class="cell b">18</div><div class="cell r">17</div><div class="cell b">16</div>
-      <div class="cell r">21</div><div class="cell b">20</div><div class="cell r">19</div>
-      <div class="cell b">24</div><div class="cell r">23</div><div class="cell b">22</div>
-      <div class="cell r">27</div><div class="cell b">26</div><div class="cell r">25</div>
-      <div class="cell b">30</div><div class="cell r">29</div><div class="cell b">28</div>
-      <div class="cell r">33</div><div class="cell b">32</div><div class="cell r">31</div>
-      <div class="cell b">36</div><div class="cell r">35</div><div class="cell b">34</div>
-
-      <!-- 2to1 (desno) -->
-      <div class="cell tag">2to1</div>
-      <div class="cell tag">2to1</div>
-      <div class="cell tag">2to1</div>
-    </div>
-
-    <div class="row dozens">
-      <div class="cell tag">1st 12</div>
-      <div class="cell tag">2nd 12</div>
-      <div class="cell tag">3rd 12</div>
-    </div>
-
-    <div class="row outside">
-      <div class="cell tag">1 - 18</div>
-      <div class="cell tag">Even</div>
-      <div class="cell tag diamond">◈</div>
-      <div class="cell tag">Odd</div>
-      <div class="cell tag">19 - 36</div>
-    </div>
-  </section>
-
-  <footer class="statusbar">
-    <div>YOUR BALANCE <strong>£100.00</strong></div>
-    <div>PLACE YOUR BETS</div>
-    <div>TOTAL BET <strong>£0.00</strong></div>
+  <footer>
+    <small>European roulette • Colors: GOLD (replaces red) & PURPLE (replaces black) • 0 is green</small>
   </footer>
+
+  <script src="app.js"></script>
 </body>
 </html>
