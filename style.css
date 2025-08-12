@@ -1,148 +1,67 @@
+/* Pi Roulette styles */
 :root{
-  --felt:#156b36; --felt-dark:#0e4b26;
-  --wood1:#6b3e1f; --wood2:#3d2313;
-  --red:#b01919; --black:#0f0f10; --green:#0d9447; --gold:#ffcc2e;
-  --panel:#0f0f0f; --ink:#f2f2f2;
-  --radius:16px; --gap:12px;
-  --max:1200px;
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{margin:0;background:#0a0a0a;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-
-/* HEADER */
-.topbar{background:#112414;border-bottom:1px solid #1d2a1b;padding:12px 16px}
-.topbar h1{margin:0;font-weight:900;letter-spacing:.5px}
-
-/* GORNJI LAYOUT: žetoni – točak – history */
-.stage{
-  max-width:var(--max);
-  margin:0 auto;
-  padding:var(--gap);
-  display:grid;
-  grid-template-columns: 80px 1fr 180px;
-  gap:var(--gap);
-}
-@media (max-width:980px){
-  .stage{grid-template-columns: 72px 1fr 150px;}
-}
-@media (max-width:760px){
-  .stage{grid-template-columns: 1fr; grid-template-rows:auto; }
+  --pi-gold: #F3B73C;
+  --pi-gold-dark: #d79e25;
+  --pi-purple: #5A2D82;
+  --pi-purple-dark:#4a246b;
+  --felt: #0A6B3E;
+  --felt-dark:#095e37;
+  --ink:#ffffff;
+  --grid:#ffd980;
+  --shadow: rgba(0,0,0,.25);
 }
 
-/* ŽETONI */
-.chips{
-  background:var(--panel);
-  border:1px solid #232323;
-  border-radius:var(--radius);
-  padding:10px;
-  display:flex;flex-direction:column;gap:10px;
-}
-.chip{
-  background:var(--gold); color:#222; border:0;
-  width:56px;height:56px;border-radius:50%;
-  font-weight:900; box-shadow:0 6px 0 #caa41f, 0 10px 24px rgba(0,0,0,.35);
-}
-@media (max-width:760px){
-  .chips{order:3;flex-direction:row;justify-content:center}
-}
+*{box-sizing:border-box;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+body{margin:0;background:var(--felt);color:var(--ink)}
 
-/* WHEEL */
-.wheel-wrap{
-  position:relative;
-  background:var(--panel);
-  border:1px solid #232323;border-radius:var(--radius);
-  padding:14px; display:flex;align-items:center;justify-content:center;
-  min-height:380px;
+header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 16px;background:linear-gradient(180deg, #073e24, var(--felt-dark));
+  border-bottom:2px solid #05321e;
 }
-.pin{
-  position:absolute;left:50%;top:8px;transform:translateX(-50%);
-  width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-bottom:20px solid var(--gold);z-index:3
-}
-/* sam točak – čisto CSS */
-.wheel{
-  width:min(88vw, 560px); aspect-ratio:1/1; border-radius:50%;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(255,255,255,.15) 0 20%, transparent 20% 100%),
-    repeating-conic-gradient(
-      from -5deg,
-      var(--red) 0 10deg, var(--black) 10deg 20deg
-    );
-  border:10px solid var(--gold);
-  box-shadow:inset 0 0 0 8px var(--wood2), inset 0 0 0 22px var(--wood1), 0 18px 40px rgba(0,0,0,.45);
-  position:relative;
-  overflow:hidden;
-}
-/* nulta zelena traka (vizuelni hint) */
-.wheel:after{
-  content:""; position:absolute; inset:0;
-  background:conic-gradient(from -4deg, var(--green) 0 8deg, transparent 8deg 360deg);
-  mix-blend-mode:overlay; opacity:.75;
-}
-/* centralna kapa */
-.wheel:before{
-  content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-  width:36%; aspect-ratio:1; border-radius:50%;
-  background:radial-gradient(circle at 35% 35%, #777, #333 55%, #111 100%);
-  box-shadow:inset 0 2px 10px rgba(255,255,255,.15);
-}
+h1{margin:0;font-weight:800;letter-spacing:.5px}
+.bankroll{display:flex;gap:12px;align-items:center}
+select, button{border:none;border-radius:10px;padding:10px 14px;font-weight:700}
+button{background:var(--pi-gold);color:#241700;box-shadow:0 2px 0 var(--pi-gold-dark);cursor:pointer}
+button:hover{filter:brightness(1.05)}
+button:active{transform:translateY(1px)}
+button.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink);box-shadow:none}
 
-/* SPIN dugme (samo UI) */
-.spin-cta{
-  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-  background:var(--gold); color:#222; font-weight:900;
-  padding:14px 28px; border-radius:12px; box-shadow:0 6px 0 #caa41f, 0 12px 24px rgba(0,0,0,.35);
-}
+main{max-width:1100px;margin:0 auto;padding:16px}
+.table-area{display:grid;grid-template-columns:480px 1fr;gap:18px;align-items:start}
+#wheel{width:100%;height:auto;background:radial-gradient(ellipse at center, #C9961A 0%, #B27F12 70%, #8d660b 100%);border-radius:12px;box-shadow:0 10px 30px var(--shadow)}
 
-/* HISTORY panel */
-.history{
-  background:var(--panel);
-  border:1px solid #232323;border-radius:var(--radius);
-  padding:12px; display:flex;flex-direction:column;gap:10px
-}
-.history h3{margin:0 0 8px 0;font-weight:800}
-.history-row{display:flex;gap:6px;flex-wrap:wrap}
-.ball{
-  display:inline-flex;align-items:center;justify-content:center;
-  width:34px;height:34px;border-radius:50%;font-size:.9rem;font-weight:900
-}
-.ball.r{background:#b01919}
-.ball.b{background:#1a1a1d}
-.ball.g{background:#0d9447}
-
-/* TABLA */
-.table{
-  max-width:var(--max); margin:10px auto; padding:12px;
-  background:
-    radial-gradient(130% 100% at 50% 0%, rgba(255,255,255,.08), rgba(255,255,255,0) 38%),
-    var(--felt);
-  border:1px solid #214d30; border-radius:var(--radius);
-  box-shadow:inset 0 12px 28px rgba(0,0,0,.35)
-}
+.layout{background:var(--felt-dark);padding:12px;border-radius:12px;box-shadow:inset 0 0 0 2px #05321e}
 .grid{
-  display:grid; gap:6px;
-  grid-template-columns: 1.1fr repeat(12, 1fr) .9fr .9fr .9fr;  /* 0 | 12 kolona | 2to1 */
+  display:grid;
+  grid-template-columns:repeat(12, 1fr);
+  gap:6px;
+  margin-bottom:12px;
 }
-.cell{
-  user-select:none; text-align:center; color:#fff; font-weight:900;
-  padding:.6rem; border-radius:8px; border:2px solid rgba(255,255,255,.25);
-  background:rgba(0,0,0,.18);
+.grid .cell{
+  position:relative;
+  background:#0c5a34;
+  border:2px solid var(--grid);
+  padding:10px 0;
+  text-align:center;
+  font-weight:800;
+  border-radius:8px;
+  user-select:none;
 }
-.cell.zero{background:var(--green); grid-row:1 / span 3}
-.cell.r{background:var(--red)}
-.cell.b{background:var(--black)}
-.cell.tag{background:#0f5b2b}
-.row{display:grid; grid-template-columns:repeat(12,1fr); gap:6px; margin-top:6px}
-.dozens .cell, .outside .cell{padding:.75rem 0}
-.diamond{font-size:1.2rem}
+.cell.zero{grid-column:1 / span 1;grid-row:1 / span 3;background:#0aa84f}
+.cell[data-color="gold"]{background:var(--pi-gold);color:#2b1c00}
+.cell[data-color="purple"]{background:var(--pi-purple)}
+.cell .stake{
+  position:absolute;right:4px;bottom:2px;background:rgba(0,0,0,.55);padding:2px 6px;border-radius:10px;font-size:12px
+}
 
-/* STATUS BAR */
-.statusbar{
-  position:sticky; bottom:0;
-  background:#101010;border-top:1px solid #1f1f1f;
-  color:#cfcfcf; padding:10px 14px; display:flex;justify-content:space-between;gap:12px
-}
-.statusbar strong{color:#fff}
-@media (max-width:760px){
-  .statusbar{flex-direction:column;align-items:center;text-align:center}
-}
+.outside-bets{display:grid;grid-template-columns:repeat(3, 1fr);gap:8px}
+.outside-bets .bet{background:#0c5a34;border:2px solid var(--grid);color:var(--ink)}
+.outside-bets .bet[data-bet="gold"]{background:var(--pi-gold);color:#2b1c00}
+.outside-bets .bet[data-bet="purple"]{background:var(--pi-purple)}
+
+.controls{display:flex;gap:16px;align-items:center;margin-top:16px}
+#spin{font-size:20px;padding:12px 24px;border-radius:999px;background:linear-gradient(180deg,var(--pi-gold),var(--pi-gold-dark));color:#1d1400}
+.status{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;flex:1;background:#05321e;border-radius:12px;padding:10px}
+
+footer{padding:16px;text-align:center;opacity:.75}
