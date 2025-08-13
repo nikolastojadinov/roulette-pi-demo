@@ -3,63 +3,96 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pi Sandbox + Netlify demo</title>
+  <title>Pi Sandbox + Netlify</title>
 
   <!-- Pi SDK -->
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
   <style>
-    body { font-family: system-ui, sans-serif; margin: 2rem; }
-    button { padding: .7rem 1rem; border: 0; border-radius: .5rem; cursor: pointer; margin-bottom: 1rem; }
-    #out { white-space: pre-wrap; margin-top: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: .5rem; }
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    body { margin: 2rem; }
+    h1 { margin-bottom: 1rem; }
+    .row { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    button { padding: .7rem 1rem; border: 0; border-radius: .5rem; cursor: pointer; }
+    #out { white-space: pre-wrap; padding: 1rem; border: 1px solid #ddd; border-radius: .5rem; min-height: 3rem; }
+    .card { padding: 1rem; border: 1px solid #eee; border-radius: .5rem; margin-bottom: 1rem; }
+    .muted { color: #666; font-size: .9rem; }
+    #user { font-weight: 600; }
   </style>
 </head>
 <body>
   <h1>Pi Sandbox + Netlify</h1>
 
-  <!-- Dugme za Pi login -->
-  <button id="btnLogin">Pi Login (sandbox)</button>
-
-  <!-- Dugme za Netlify funkciju -->
-  <p>
-    <button id="btn">Pozovi <code>/.netlify/functions/hello</code></button>
-  </p>
+  <div class="card">
+    <div class="row">
+      <button id="btnLogin">Pi Login (sandbox)</button>
+      <button id="btnLogout" style="display:none">Logout</button>
+      <button id="btnHello">Pozovi <code>/.netlify/functions/hello</code></button>
+    </div>
+    <div class="muted">Status: <span id="status">inicijalizujem…</span></div>
+    <div class="muted">Korisnik: <span id="user">niste ulogovani</span></div>
+  </div>
 
   <div id="out">Spremno.</div>
 
   <script>
-    // --- Inicijalizacija Pi SDK u sandbox modu ---
+    const $status = document.getElementById('status');
+    const $user   = document.getElementById('user');
+    const $out    = document.getElementById('out');
+    const $login  = document.getElementById('btnLogin');
+    const $logout = document.getElementById('btnLogout');
+    const $hello  = document.getElementById('btnHello');
+
+    function setStatus(msg){ $status.textContent = msg; }
+    function setUser(name){  $user.textContent   = name || 'niste ulogovani'; }
+
+    // 1) Inicijalizacija Pi SDK u sandbox modu
     if (window.Pi && typeof Pi.init === 'function') {
       Pi.init({ version: "2.0", sandbox: true });
+      setStatus('Pi SDK učitan (sandbox)');
     } else {
-      console.warn("Pi SDK nije učitan.");
+      setStatus('Pi SDK NIJE učitan – otvori ovu stranicu preko "Run App in the Sandbox".');
     }
 
-    // --- Pi Login dugme ---
-    document.getElementById('btnLogin').addEventListener('click', async () => {
+    // 2) Login
+    $login.addEventListener('click', async () => {
       try {
-        const scopes = ['username']; // samo username za test
-        const auth = await Pi.authenticate(scopes, (payment) => {
-          console.log('Incomplete payment:', payment);
-        });
-        alert('Ulogovan: ' + auth.user.username);
-        console.log('Auth result:', auth);
+        if (!window.Pi || typeof Pi.authenticate !== 'function') {
+          alert('Pi SDK nije aktivan. Otvori sajt preko sandbox.minepi.com/app i unesi kod.');
+          return;
+        }
+        setStatus('Prijavljivanje…');
+        const scopes = ['username'];
+        const auth = await Pi.authenticate(scopes, (p)=>console.log('Incomplete payment:', p));
+        setUser(auth.user.username);
+        setStatus('Ulogovan');
+        $login.style.display = 'none';
+        $logout.style.display = 'inline-block';
+        // Ako ti ikad zatreba token na serveru:
+        // console.log('accessToken:', auth.accessToken);
       } catch (e) {
-        alert('Pi auth greška: ' + e.message);
+        console.error(e);
+        setStatus('Greška pri prijavi: ' + (e?.message || e));
       }
     });
 
-    // --- Tvoj postojeći kod za Netlify funkciju ---
-    const out = document.getElementById('out');
+    // 3) Logout (frontend-only reset)
+    $logout.addEventListener('click', () => {
+      setUser('');
+      setStatus('Odjavljen (frontend reset)');
+      $logout.style.display = 'none';
+      $login.style.display  = 'inline-block';
+    });
 
-    document.getElementById('btn').addEventListener('click', async () => {
-      out.textContent = 'Pozivam /.netlify/functions/hello …';
+    // 4) Netlify funkcija
+    $hello.addEventListener('click', async () => {
+      $out.textContent = 'Pozivam /.netlify/functions/hello …';
       try {
         const res  = await fetch('/.netlify/functions/hello', { method: 'GET' });
         const text = await res.text();
-        out.textContent = `Status: ${res.status}\n\n${text}`;
+        $out.textContent = `Status: ${res.status}\n\n${text}`;
       } catch (e) {
-        out.textContent = 'Greška: ' + e.message;
+        $out.textContent = 'Greška: ' + e.message;
       }
     });
   </script>
