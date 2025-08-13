@@ -25,8 +25,14 @@
     label { display:block; font-size:.9rem; margin-bottom:6px; color:#444; }
     input, select { width:100%; padding:.6rem .7rem; border:1px solid #ddd; border-radius:8px; }
     .pill { display:inline-block; padding:.25rem .55rem; border:1px solid #ddd; border-radius:999px; margin-right:6px; font-size:.85rem; }
-    .ok { color:#0a7; }
-    .err { color:#d33; }
+    .ok { color:#0a7; } .err { color:#d33; }
+    @media (max-width: 420px){
+      body { margin:16px; }
+      h1 { font-size:1.4rem; }
+      .card { padding:12px; }
+      button { padding:.6rem .9rem; }
+      #wheel { width:220px; height:220px; }
+    }
   </style>
 </head>
 <body>
@@ -68,11 +74,13 @@
           <option value="100">100</option>
         </select>
       </div>
-      <div style="display:flex; align-items:flex-end;">
+      <div style="display:flex; align-items:flex-end; gap:8px;">
         <button id="spin">SPIN</button>
+        <!-- Pi payment dugme: 1 π testnet = +10 credits -->
+        <button id="topup">Top-up: +10 credits (1 π testnet)</button>
       </div>
     </div>
-    <div class="muted">Napomena: ovo je lokalna “credits” ekonomija za testiranje. U sledećem koraku dodaćemo Pi plaćanje.</div>
+    <div class="muted">Napomena: “credits” su lokalni. Dugme Top-up koristi Pi payment (testnet) i doda 10 kredita po uspešnom **complete**.</div>
   </div>
 
   <div id="pointer"></div>
@@ -84,32 +92,33 @@
   </div>
 
   <script>
-    // ------------------ Pi SDK init ------------------
+    // ------------ helpers ------------
     const $status = document.getElementById('status');
     const $user   = document.getElementById('user');
     const $login  = document.getElementById('btnLogin');
     const $logout = document.getElementById('btnLogout');
-
     function setStatus(msg){ $status.textContent = msg; }
     function setUser(name){  $user.textContent   = name || 'niste ulogovani'; }
 
+    // 1) Pi SDK init
     if (window.Pi && typeof Pi.init === 'function') {
       Pi.init({ version: "2.0", sandbox: true });
       setStatus('Pi SDK učitan (sandbox)');
     } else {
-      setStatus('Pi SDK NIJE učitan – otvori stranicu preko "Run App in the Sandbox".');
+      setStatus('Pi SDK NIJE učitan – otvori preko "Run App in the Sandbox".');
     }
 
+    // 2) Login/Logout
     $login.addEventListener('click', async () => {
       try {
         if (!window.Pi || typeof Pi.authenticate !== 'function') {
-          alert('Pi SDK nije aktivan. Otvori sajt preko sandbox.minepi.com/app i unesi kod.');
+          alert('Pi SDK nije aktivan (otvori kroz sandbox.minepi.com/app).');
           return;
         }
         setStatus('Prijavljivanje…');
         const scopes = ['username'];
-        const auth = await Pi.authenticate(scopes, (p)=>console.log('Incomplete payment:', p));
-        window.__auth = auth; // sačuvaj za kasnije (npr. slanje tokena serveru)
+        const auth = await Pi.authenticate(scopes, (p)=>console.log('incomplete payment', p));
+        window.__auth = auth; // čuvamo token i username
         setUser(auth.user.username);
         setStatus('Ulogovan');
         $login.style.display = 'none';
@@ -119,7 +128,6 @@
         setStatus('Greška pri prijavi: ' + (e?.message || e));
       }
     });
-
     $logout.addEventListener('click', () => {
       window.__auth = undefined;
       setUser('');
@@ -128,7 +136,7 @@
       $login.style.display  = 'inline-block';
     });
 
-    // ------------------ Mini roulette engine ------------------
+    // 3) Mini roulette engine (kao ranije)
     const redNumbers   = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
     const blackNumbers = new Set([2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35]);
 
@@ -140,15 +148,21 @@
     const betNumber  = document.getElementById('betNumber');
     const out        = document.getElementById('out');
     const spinBtn    = document.getElementById('spin');
+    const topupBtn   = document.getElementById('topup');
 
     let bankroll = 1000;
-    chipSel.addEventListener('change', ()=> chipView.textContent = chipSel.value);
+    const KEY = 'roulette.bankroll';
+    const saved = localStorage.getItem(KEY);
+    if (saved) bankroll = Number(saved) || bankroll;
+    bankrollEl.textContent = bankroll;
+    function saveBankroll(){ localStorage.setItem(KEY, String(bankroll)); }
 
+    chipSel.addEventListener('change', ()=> chipView.textContent = chipSel.value);
     betType.addEventListener('change', () => {
       numberWrap.style.display = betType.value === 'number' ? 'block' : 'none';
     });
 
-    // Draw wheel (simple 37-slice ring)
+    // nacrtaj točak
     const wheel = document.getElementById('wheel');
     (function drawWheel(){
       const numbers = Array.from({length:37}, (_,i)=>i);
@@ -162,103 +176,99 @@
         wheel.appendChild(slice);
       });
     })();
-
     function spinAnimationTo(resultNumber){
-      const total = 37;
-      const degPer = 360/total;
-      const index = resultNumber; // naš raspored je 0..36 redom
-      const targetDeg = (360*6) + (index*degPer) + (degPer/2); // 6 krugova + centriranje
+      const total = 37, degPer = 360/total;
+      const targetDeg = (360*6) + (resultNumber*degPer) + (degPer/2);
       wheel.style.transition = 'transform 3.6s cubic-bezier(.2,.8,.2,1)';
       wheel.style.transform  = `rotate(-${targetDeg}deg)`;
     }
-
-    function colorOf(n){
-      if (n===0) return 'green';
-      if (redNumbers.has(n)) return 'red';
-      if (blackNumbers.has(n)) return 'black';
-      return 'unknown';
-    }
-
+    function colorOf(n){ if (n===0) return 'green'; if (redNumbers.has(n)) return 'red'; if (blackNumbers.has(n)) return 'black'; return 'unknown'; }
     function pay(bet, result){
       const chip = Number(chipSel.value);
       if (chip > bankroll) return { ok:false, msg:'Nema dovoljno credits-a.' };
-
-      bankroll -= chip; // ulog
+      bankroll -= chip;
       let win = 0, hit = false;
-
       switch(bet.type){
-        case 'number':
-          hit = (result.number === bet.number);
-          if (hit) win = chip * 35;
-          break;
-        case 'red':
-          hit = (result.color==='red');
-          if (hit) win = chip * 2;
-          break;
-        case 'black':
-          hit = (result.color==='black');
-          if (hit) win = chip * 2;
-          break;
-        case 'even':
-          hit = (result.number!==0 && result.number%2===0);
-          if (hit) win = chip * 2;
-          break;
-        case 'odd':
-          hit = (result.number%2===1);
-          if (hit) win = chip * 2;
-          break;
+        case 'number': hit = (result.number === bet.number); if (hit) win = chip * 35; break;
+        case 'red':    hit = (result.color==='red');         if (hit) win = chip * 2;  break;
+        case 'black':  hit = (result.color==='black');       if (hit) win = chip * 2;  break;
+        case 'even':   hit = (result.number!==0 && result.number%2===0); if (hit) win = chip * 2; break;
+        case 'odd':    hit = (result.number%2===1);          if (hit) win = chip * 2;  break;
       }
-
       bankroll += win;
-      bankrollEl.textContent = bankroll;
+      bankrollEl.textContent = bankroll; saveBankroll();
       return { ok:true, hit, win, net: win - chip };
     }
-
     function line(msg){ out.textContent = msg; }
 
     spinBtn.addEventListener('click', async () => {
-      // priprema opklade
       const bet = { type: betType.value, number: Number(betNumber.value) };
-      if (bet.type==='number' && (bet.number<0 || bet.number>36)) {
-        line('Greška: broj mora biti 0–36.');
+      if (bet.type==='number' && (bet.number<0 || bet.number>36)) { line('Greška: broj mora biti 0–36.'); return; }
+      const resultNumber = Math.floor(Math.random()*37);
+      const result = { number: resultNumber, color: colorOf(resultNumber) };
+      spinAnimationTo(resultNumber);
+      await new Promise(r => setTimeout(r, 3600));
+      const p = pay(bet, result);
+      line(`Ispalo: ${result.number} (${result.color})
+Opklada: ${bet.type}${bet.type==='number' ? ' '+bet.number : ''}
+${p.ok ? (p.hit ? 'Pogodak! ' : 'Promašaj. ') : ''}Neto: ${p.net ?? '—'}`);
+    });
+
+    // 4) Pi Payment: top-up 10 credits = 1 π (testnet)
+    topupBtn.addEventListener('click', async () => {
+      if (!window.__auth?.accessToken) {
+        alert('Uloguj se prvo (Pi Login).');
         return;
       }
-
-      // SPIN – “pseudo RNG”
-      const resultNumber = Math.floor(Math.random()*37); // 0..36
-      const result = { number: resultNumber, color: colorOf(resultNumber) };
-
-      // animacija
-      spinAnimationTo(resultNumber);
-
-      // sačekaj trajanje animacije (3.6s)
-      await new Promise(r => setTimeout(r, 3600));
-
-      // obračun
-      const p = pay(bet, result);
-
-      const tag = p.hit ? 'ok' : 'err';
-      line(
-        `Ispalo: ${result.number} (${result.color})
-Opklada: ${bet.type}${bet.type==='number' ? ' '+bet.number : ''}
-${p.ok ? (p.hit ? 'Pogodak! ' : 'Promašaj. ') : ''}Neto: ${p.net ?? '—'}`
-      );
-
-      // —— HOOK za Pi plaćanje (sledeći korak) ——
-      // Ovde možeš pozvati backend endpoint koji će kreirati Pi Payment
-      // za npr. kupovinu kredita, ili naplatu buy-in-a.
-      // Primer (samo skeleton, kad budeš dodavao):
-      /*
-      if (window.__auth) {
+      try {
+        setStatus('Kreiram payment…');
+        // 4.1 zatraži od servera payment-data
         const res = await fetch('/.netlify/functions/create-payment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + window.__auth.accessToken },
-          body: JSON.stringify({ amount: 1, memo: 'Roulette credit top-up' })
+          body: JSON.stringify({ amount: 1, memo: 'Top-up 10 credits', metadata: { credits: 10 } })
         });
         const paymentData = await res.json();
-        // await Pi.createPayment(paymentData, { onReadyForServerApproval, onReadyForServerCompletion, onCancel, onError })
+        if (!res.ok) throw new Error(paymentData?.error || 'create-payment fail');
+
+        // 4.2 pokreni Pi.createPayment
+        await Pi.createPayment(paymentData, {
+          onReadyForServerApproval: async (paymentId) => {
+            setStatus('Server approval…');
+            const r = await fetch('/.netlify/functions/approve-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ paymentId })
+            });
+            if (!r.ok) throw new Error('approve-payment fail');
+          },
+          onReadyForServerCompletion: async (paymentId, txid) => {
+            setStatus('Server completion…');
+            const r = await fetch('/.netlify/functions/complete-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ paymentId, txid })
+            });
+            if (!r.ok) throw new Error('complete-payment fail');
+
+            // uspeh → dodaj kredite
+            bankroll += 10; bankrollEl.textContent = bankroll; saveBankroll();
+            line('✅ Top-up uspešan: +10 credits');
+            setStatus('Plaćanje završeno');
+          },
+          onCancel: (paymentId) => {
+            setStatus('Otkazano');
+            fetch('/.netlify/functions/cancel-payment', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ paymentId }) });
+          },
+          onError: (error, payment) => {
+            console.error('Pi payment error:', error, payment);
+            setStatus('Greška pri plaćanju: ' + (error?.message || error));
+          }
+        });
+      } catch (e) {
+        console.error(e);
+        setStatus('Greška: ' + (e?.message || e));
       }
-      */
     });
   </script>
 </body>
