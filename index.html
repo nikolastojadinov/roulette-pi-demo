@@ -1,275 +1,235 @@
-<!doctype html>
-<html lang="sr">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Roulette · Pi Sandbox</title>
+<!-- 1) Add a mount node somewhere in your page -->
+<div id="roulette-app"></div>
 
-  <!-- Pi SDK -->
-  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+<!-- 2) Paste CSS + JS below (can live in your existing page or bundled) -->
+<style>
+:root{
+  --felt:#0A3A2E; --felt-grain:radial-gradient(900px 600px at 20% -10%, #0f4d3d66, transparent 60%),
+                   radial-gradient(1000px 700px at 120% 10%, #12564655, transparent 66%);
+  --panel:#0F2019; --gold:#D8B76A; --ink:#F6F7F4; --muted:#C7D1C9; --shadow:0 14px 40px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box} html,body{height:100%}
+body{background:var(--felt) fixed;background-image:repeating-linear-gradient(145deg,rgba(255,255,255,.02) 0 2px,transparent 2px 6px),var(--felt-grain)}
+#roulette-app{max-width:440px;margin:12px auto 40px;padding:0 12px;color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial}
 
-  <style>
-    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-    body { margin: 24px; }
-    h1 { margin: 0 0 16px; }
-    .bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
-    button { padding:.7rem 1rem; border:0; border-radius:10px; cursor:pointer; }
-    .card { border:1px solid #e5e5e5; border-radius:12px; padding:16px; margin-bottom:16px; }
-    .muted { color:#666; font-size:.9rem; }
-    #user { font-weight:600; }
-    #wheel { width:260px; height:260px; border-radius:50%; border:6px solid #222; margin:0 auto 16px; position:relative; overflow:hidden; }
-    #wheel .slice { position:absolute; width:50%; height:50%; top:50%; left:50%; transform-origin:0% 0%; }
-    #pointer { width:0; height:0; border-left:12px solid transparent; border-right:12px solid transparent; border-bottom:18px solid #ff5252; margin:0 auto 8px; }
-    #out { white-space:pre-wrap; border:1px solid #eee; border-radius:10px; padding:12px; min-height:3rem; }
-    .grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
-    label { display:block; font-size:.9rem; margin-bottom:6px; color:#444; }
-    input, select { width:100%; padding:.6rem .7rem; border:1px solid #ddd; border-radius:8px; }
-    .pill { display:inline-block; padding:.25rem .55rem; border:1px solid #ddd; border-radius:999px; margin-right:6px; font-size:.85rem; }
-    .ok { color:#0a7; } .err { color:#d33; }
-    @media (max-width: 420px){
-      body { margin:16px; }
-      h1 { font-size:1.4rem; }
-      .card { padding:12px; }
-      button { padding:.6rem .9rem; }
-      #wheel { width:220px; height:220px; }
-    }
-  </style>
-</head>
-<body>
-  <h1>Roulette · Pi Sandbox</h1>
+.card{background:radial-gradient(120% 140% at 50% -30%,#1c3b2f,#0b1f18),linear-gradient(180deg,rgba(255,255,255,.04),rgba(0,0,0,.22));
+  border:1px solid #ffffff1f;border-radius:18px;box-shadow:var(--shadow);padding:14px;margin-top:12px}
 
-  <div class="card">
-    <div class="bar">
-      <button id="btnLogin">Pi Login</button>
-      <button id="btnLogout" style="display:none">Logout</button>
-      <span class="muted">Status: <span id="status">inicijalizujem…</span></span>
-      <span class="muted">Korisnik: <span id="user">niste ulogovani</span></span>
-      <span class="pill">Bankroll: <span id="bankroll">1000</span> credits</span>
-      <span class="pill">Chip: <span id="chipView">10</span></span>
-    </div>
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:14px;border:1px solid #ffffff22;
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.2)),radial-gradient(120% 100% at 50% -30%,#1b3b2e,#0b1e17)}
+.brand{font-family:Georgia,'Times New Roman',serif;font-weight:800;letter-spacing:.4px;color:#EAD6A0}
+.balance{display:flex;align-items:center;gap:10px}
+.tag{padding:3px 10px;border:1px solid #ffffff22;border-radius:999px;background:linear-gradient(180deg,#20392f,#0d2019);font-size:12px}
+.amount{font-weight:800}
 
-    <div class="grid">
-      <div>
-        <label>Vrsta opklade</label>
-        <select id="betType">
-          <option value="number">Tačan broj (0–36) — 35:1</option>
-          <option value="red">Crveno — 1:1</option>
-          <option value="black">Crno — 1:1</option>
-          <option value="even">Parno — 1:1</option>
-          <option value="odd">Neparno — 1:1</option>
-        </select>
-      </div>
-      <div id="numberWrap">
-        <label>Broj (0–36)</label>
-        <input id="betNumber" type="number" min="0" max="36" value="7"/>
-      </div>
-      <div>
-        <label>Iznos (chip)</label>
-        <select id="chip">
-          <option value="1">1</option>
-          <option value="5">5</option>
-          <option value="10" selected>10</option>
-          <option value="25">25</option>
-          <option value="50">50</option>
-          <option value="100">100</option>
-        </select>
-      </div>
-      <div style="display:flex; align-items:flex-end; gap:8px;">
-        <button id="spin">SPIN</button>
-        <!-- Pi payment dugme: 1 π testnet = +10 credits -->
-        <button id="topup">Top-up: +10 credits (1 π testnet)</button>
-      </div>
-    </div>
-    <div class="muted">Napomena: “credits” su lokalni. Dugme Top-up koristi Pi payment (testnet) i doda 10 kredita po uspešnom **complete**.</div>
+.wheel-wrap{display:grid;place-items:center;gap:10px}
+.wheel{width:min(88vw,380px);height:min(88vw,380px);border-radius:50%;position:relative;overflow:hidden;
+  background:radial-gradient(circle at 50% 50%,#55301d 0,#2f180e 45%,#1a0d08 70%);box-shadow:inset 0 0 0 12px #3b1f12,inset 0 0 0 28px #7a3e22,0 14px 30px rgba(0,0,0,.6)}
+.wheel svg{position:absolute;inset:0;width:100%;height:100%}
+.hub{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:28%;height:28%;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#f7e6b5,#d4b46a 55%,#a78333 70%,#6b521b);box-shadow:inset 0 2px 6px rgba(255,255,255,.45),0 10px 26px rgba(0,0,0,.65);display:grid;place-items:center}
+.hub .badge{font-family:Georgia,'Times New Roman',serif;font-weight:800;font-size:26px;color:#1c1606;background:linear-gradient(180deg,#f3e4b2,#d6b86f);
+  padding:6px 12px;border-radius:999px;border:1px solid #0003;box-shadow:inset 0 -2px 0 #0003}
+.peg{position:absolute;top:-6px;left:50%;width:12px;height:20px;transform:translateX(-50%);border-radius:6px;background:radial-gradient(circle at 50% 20%,#fff,#e7d48a 60%,#6d521b);box-shadow:0 6px 14px rgba(0,0,0,.65)}
+.ball{position:absolute;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,#ddd 60%,#aaa);pointer-events:none;z-index:6;transform-origin: calc(50% - 40%) 50%}
+
+.spin-btn{margin-top:8px;padding:16px 32px;border-radius:999px;font-weight:900;letter-spacing:.8px;font-size:20px;color:#231a07;text-shadow:0 1px 0 #fff6;
+  background:linear-gradient(180deg,#ead79c,#d0af5b);border:1px solid #0003;box-shadow:0 12px 20px rgba(0,0,0,.35),inset 0 -2px 0 #0003;cursor:pointer}
+.last-strip{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.pill{padding:4px 8px;border-radius:999px;font-size:12px;border:1px solid #ffffff22;background:#13241d}
+.pill.red{background:#3b1814;color:#ffd5d1}.pill.black{background:#1a1a1a;color:#e8e8e8}.pill.green{background:#0f3a2b;color:#d5ffe8}
+
+.table{margin-top:6px;background:repeating-linear-gradient(145deg,rgba(255,255,255,.02) 0 2px,transparent 2px 6px),linear-gradient(180deg,#0e231b,#0a1a14);
+  border:1px solid #caa85a55;border-radius:14px;padding:10px;box-shadow:inset 0 0 0 2px #0003}
+.grid{display:grid;grid-template-columns:60px 1fr;gap:10px}
+.zero-col{display:grid;grid-template-rows:repeat(3,50px);gap:10px}
+.zero-cell{grid-row:1/4;display:grid;place-items:center;font-weight:800;color:#b8f1d9;background:linear-gradient(180deg,#0e503e,#0b3a2e);
+  border:1px solid #2a5c4a;border-radius:12px;cursor:pointer;position:relative}
+.numbers{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(3,50px);gap:10px}
+.cell{position:relative;display:grid;place-items:center;border-radius:12px;cursor:pointer;font-weight:700;border:1px solid #ffffff22;
+  background:linear-gradient(180deg,#142620,#0c1c16);box-shadow:inset 0 0 0 2px #0003}
+.cell.red{background:linear-gradient(180deg,#5a1d16,#34110d)} .cell.black{background:linear-gradient(180deg,#262626,#121212)}
+.sep{height:1px;background:linear-gradient(90deg,transparent,#d8b76a77,transparent);margin:12px 0 8px}
+.outside-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.outside{display:grid;place-items:center;padding:12px 8px;border-radius:12px;cursor:pointer;border:1px solid #ffffff22;background:linear-gradient(180deg,#142620,#0c1c16);font-weight:700}
+.outside.tag{background:transparent;border:none;color:#d9e7df;cursor:default;font-weight:500}
+.bet-badge{position:absolute;bottom:6px;right:6px;pointer-events:none;font-size:12px;font-weight:800;padding:4px 6px;border-radius:10px;background:linear-gradient(180deg,#213329,#0c2019);border:1px solid #ffffff22}
+
+.chipsbar{margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.chip{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-weight:900;cursor:pointer;position:relative;color:#111;
+  box-shadow:0 12px 20px rgba(0,0,0,.4),inset 0 0 0 3px #ffffff66;border:6px double #0006}
+.chip:before{content:"";position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(from 0deg,#0003 0 6deg,transparent 6deg 18deg);
+  mask:radial-gradient(circle,transparent 58%,#000 59%);-webkit-mask:radial-gradient(circle,transparent 58%,#000 59%)}
+.chip span{position:relative;z-index:1;text-shadow:0 1px 0 #fff8}
+.chip[data-v="1"]{background:#2e7d32;color:#fff}.chip[data-v="5"]{background:#c0392b;color:#fff}
+.chip[data-v="10"]{background:#2980b9;color:#fff}.chip[data-v="25"]{background:#8e44ad;color:#fff}
+.chip[data-v="50"]{background:#1e1e1e;color:#f1f1f1}.chip[data-v="100"]{background:#f1c40f;color:#1b1607}
+.chip.selected{outline:3px solid var(--gold);outline-offset:2px;transform:translateY(-1px)}
+
+.ctas{margin-top:10px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.btn{padding:13px 10px;border-radius:12px;cursor:pointer;text-align:center;font-weight:800;background:linear-gradient(180deg,#233b31,#0e2019);border:1px solid #ffffff22;color:var(--ink)}
+.btn.danger{background:linear-gradient(180deg,#3b1613,#1a0a09);border-color:#e6394622}
+.limitline{margin-top:6px;display:flex;gap:12px;justify-content:center;font-size:13px;color:var(--muted)}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);padding:10px 14px;border-radius:12px;border:1px solid #ffffff22;background:linear-gradient(180deg,#213329,#0c2019);color:var(--ink);font-weight:800;opacity:0;transition:opacity .2s;box-shadow:var(--shadow)}
+</style>
+
+<script>
+(function mount(containerId){
+  const root = document.getElementById(containerId) || document.getElementById('roulette-app');
+  root.innerHTML = `
+  <div class="topbar">
+    <div class="brand">ROULETTE</div>
+    <div class="balance"><div class="tag">Balance</div><div class="amount" id="r_balance">1000</div></div>
   </div>
 
-  <div id="pointer"></div>
-  <div id="wheel" aria-label="roulette-wheel"></div>
-
-  <div class="card">
-    <div class="muted">Rezultat</div>
-    <div id="out">Spremno.</div>
+  <div class="card wheel-wrap">
+    <div class="wheel" id="r_wheel">
+      <svg viewBox="0 0 100 100" id="r_wheelSvg"></svg>
+      <div class="hub"><div class="badge" id="r_badge">—</div></div>
+      <div class="peg"></div>
+      <div class="ball" id="r_ball"></div>
+    </div>
+    <button class="spin-btn" id="r_spin">SPIN</button>
+    <div class="last-strip" id="r_last"></div>
   </div>
 
-  <script>
-    // ------------ helpers ------------
-    const $status = document.getElementById('status');
-    const $user   = document.getElementById('user');
-    const $login  = document.getElementById('btnLogin');
-    const $logout = document.getElementById('btnLogout');
-    function setStatus(msg){ $status.textContent = msg; }
-    function setUser(name){  $user.textContent   = name || 'niste ulogovani'; }
+  <div class="card">
+    <div class="table">
+      <div class="grid">
+        <div class="zero-col"><div class="zero-cell outside" data-type="straight" data-num="0">0</div></div>
+        <div class="numbers" id="r_numbers"></div>
+      </div>
+      <div class="sep"></div>
+      <div class="outside-row">
+        <div class="outside tag">Outside</div>
+        <div class="outside" data-type="dozen" data-dozen="1">1st 12</div>
+        <div class="outside" data-type="dozen" data-dozen="2">2nd 12</div>
+        <div class="outside" data-type="dozen" data-dozen="3">3rd 12</div>
+        <div class="outside" data-type="lowhigh" data-lh="low">1–18</div>
+        <div class="outside" data-type="lowhigh" data-lh="high">19–36</div>
+      </div>
+      <div class="outside-row" style="margin-top:10px">
+        <div class="outside" data-type="evenodd" data-eo="even">Even</div>
+        <div class="outside" data-type="evenodd" data-eo="odd">Odd</div>
+        <div class="outside" data-type="color" data-color="red">Red</div>
+        <div class="outside" data-type="color" data-color="black">Black</div>
+        <div class="outside tag">Tap squares to bet</div>
+        <div class="outside tag">Rebet/Double below</div>
+      </div>
+    </div>
+  </div>
 
-    // 1) Pi SDK init
-    if (window.Pi && typeof Pi.init === 'function') {
-      Pi.init({ version: "2.0", sandbox: true });
-      setStatus('Pi SDK učitan (sandbox)');
-    } else {
-      setStatus('Pi SDK NIJE učitan – otvori preko "Run App in the Sandbox".');
+  <div class="chipsbar" id="r_chips">
+    <div class="chip selected" data-v="1"><span>1</span></div>
+    <div class="chip" data-v="5"><span>5</span></div>
+    <div class="chip" data-v="10"><span>10</span></div>
+    <div class="chip" data-v="25"><span>25</span></div>
+    <div class="chip" data-v="50"><span>50</span></div>
+    <div class="chip" data-v="100"><span>100</span></div>
+  </div>
+
+  <div class="ctas">
+    <div class="btn" id="r_undo">UNDO</div>
+    <div class="btn danger" id="r_clear">CLEAR</div>
+    <div class="btn" id="r_rebet">REBET</div>
+    <div class="btn" id="r_double">DOUBLE</div>
+  </div>
+
+  <div class="limitline"><span>European • Provably Fair</span></div>
+  <div id="toast"></div>`;
+
+  /* data */
+  const order=[0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+  const reds=new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+  const blacks=new Set(Array.from({length:36},(_,i)=>i+1).filter(n=>!reds.has(n)));
+
+  /* build wheel */
+  const wheelSvg = document.getElementById('r_wheelSvg');
+  const cx=50,cy=50,rO=49,rI=32,rT=41,sweep=360/order.length;
+  function polar(r,a){a*=Math.PI/180;return{x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)}}
+  function ann(r0,r1,a0,a1){const p1=polar(r1,a0),p2=polar(r1,a1),p3=polar(r0,a1),p4=polar(r0,a0);const la=(a1-a0)<=180?0:1;
+    return `M ${p1.x} ${p1.y} A ${r1} ${r1} 0 ${la} 1 ${p2.x} ${p2.y} L ${p3.x} ${p3.y} A ${r0} ${r0} 0 ${la} 0 ${p4.x} ${p4.y} Z`;}
+  order.forEach((n,i)=>{
+    const a0=i*sweep-90, a1=a0+sweep, mid=(a0+a1)/2, col = n===0 ? '#0c533f' : (reds.has(n)?'#9b1f17':'#0f0f0f');
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',ann(rI,rO,a0,a1)); p.setAttribute('fill',col); p.setAttribute('stroke','#222'); p.setAttribute('stroke-width','0.25'); wheelSvg.appendChild(p);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text'); const pos=polar(rT,mid);
+    t.setAttribute('x',pos.x); t.setAttribute('y',pos.y+2); t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','4.2'); t.setAttribute('font-weight','800');
+    t.setAttribute('fill', n===0 ? '#cdebdc' : '#eaeaea'); t.setAttribute('transform',`rotate(${mid+90},${pos.x},${pos.y})`); t.textContent=n; wheelSvg.appendChild(t);
+  });
+
+  /* build table */
+  const cells={}, numbers=document.getElementById('r_numbers');
+  for(let c=0;c<12;c++){ for(let r=2;r>=0;r--){ const n=c*3+(3-r);
+      const d=document.createElement('div'); d.className='cell '+(reds.has(n)?'red':(blacks.has(n)?'black':'')); d.textContent=n;
+      d.dataset.type='straight'; d.dataset.num=n; numbers.appendChild(d); cells[`n:${n}`]=d; } }
+  const zero=document.querySelector('.zero-cell'); zero.dataset.type='straight'; zero.dataset.num='0'; cells['n:0']=zero;
+  document.querySelectorAll('[data-type="color"],[data-type="evenodd"],[data-type="lowhigh"],[data-type="dozen"]').forEach(el=>{
+    const t=el.dataset; const key= t.color?`c:${t.color}`: t.eo?`e:${t.eo}`: t.lh?`l:${t.lh}`: `d:${t.dozen}`; cells[key]=el; });
+
+  /* state */
+  let balance=1000, chip=1, bets={}, lastBets={}, undo=[];
+  const balEl=document.getElementById('r_balance'), last=document.getElementById('r_last'), badge=document.getElementById('r_badge');
+  function $toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.style.opacity=1; clearTimeout(t._h); t._h=setTimeout(()=>t.style.opacity=0,1200); }
+  function updateBal(){ balEl.textContent=balance.toFixed(0) } updateBal();
+
+  /* chips */
+  document.getElementById('r_chips').addEventListener('click',e=>{
+    const c=e.target.closest('.chip'); if(!c) return; document.querySelectorAll('.chip').forEach(x=>x.classList.remove('selected'));
+    c.classList.add('selected'); chip=parseInt(c.dataset.v,10);
+  });
+
+  /* place bets */
+  function key(el){const t=el.dataset; if(t.num!==undefined) return `n:${t.num}`; if(t.color) return `c:${t.color}`; if(t.eo) return `e:${t.eo}`; if(t.lh) return `l:${t.lh}`; if(t.dozen) return `d:${t.dozen}`; return '';}
+  function addBadge(el,amt){ let b=el.querySelector('.bet-badge'); if(!b){b=document.createElement('div');b.className='bet-badge';el.appendChild(b)} b.textContent=amt }
+  function clearBadges(){ Object.values(cells).forEach(el=>{const b=el.querySelector('.bet-badge'); if(b) b.remove();}); }
+  function place(el){ const k=key(el); if(!k) return; if(balance<chip){ el.animate([{filter:'brightness(1)'},{filter:'brightness(1.25)'},{filter:'brightness(1)'}],{duration:350}); return; }
+    balance-=chip; bets[k]=(bets[k]||0)+chip; undo.push({k,amt:chip}); addBadge(el,bets[k]); updateBal(); }
+  document.addEventListener('click',e=>{ const el=e.target.closest('.cell,.outside,.zero-cell'); if(!el||el.classList.contains('tag')) return; place(el); });
+
+  /* controls */
+  document.getElementById('r_undo').addEventListener('click',()=>{ const a=undo.pop(); if(!a) return; balance+=a.amt; bets[a.k]-=a.amt; if(bets[a.k]<=0) delete bets[a.k];
+    const el=cells[a.k]; if(el){const b=el.querySelector('.bet-badge'); if(b){ if(bets[a.k]) b.textContent=bets[a.k]; else b.remove();}} updateBal(); });
+  document.getElementById('r_clear').addEventListener('click',()=>{ for(const [k,amt] of Object.entries(bets)) balance+=amt; bets={}; undo=[]; clearBadges(); updateBal(); });
+  document.getElementById('r_rebet').addEventListener('click',()=>{ if(!Object.keys(lastBets).length) return; for(const [k,amt] of Object.entries(bets)) balance+=amt;
+    bets={}; undo=[]; clearBadges(); for(const [k,amt] of Object.entries(lastBets)){ if(balance>=amt){ balance-=amt; bets[k]=amt; addBadge(cells[k],amt);} } updateBal(); });
+  document.getElementById('r_double').addEventListener('click',()=>{ const need=Object.values(bets).reduce((a,b)=>a+b,0); if(!need||balance<need) return; for(const k in bets){ bets[k]*=2; addBadge(cells[k],bets[k]); } balance-=need; updateBal(); });
+
+  /* spin */
+  const wheel=document.getElementById('r_wheel'), ball=document.getElementById('r_ball'), spinBtn=document.getElementById('r_spin');
+  let spinning=false, history=[];
+  spinBtn.addEventListener('click',()=>{ if(spinning) return; spinning=true; spinBtn.disabled=true; spinBtn.textContent='SPINNING…'; lastBets={...bets};
+    const idx=Math.floor(Math.random()*order.length), n=order[idx], sweep=360/order.length, target=idx*sweep, spins=6+Math.floor(Math.random()*4), end=spins*360+target+4;
+    wheel.animate([{transform:'rotate(0deg)'},{transform:`rotate(${end}deg)`}],{duration:2200,easing:'cubic-bezier(.22,.61,.36,1)'}); wheel.style.transform=`rotate(${end}deg)`;
+    const ballRot=-(end+360); ball.animate([{transform:'rotate(0deg)'},{transform:`rotate(${ballRot}deg)`}],{duration:2200,easing:'cubic-bezier(.22,.61,.36,1)'});
+    setTimeout(()=>{ settle(n); spinBtn.disabled=false; spinBtn.textContent='SPIN'; spinning=false; },2250);
+  });
+
+  function settle(n){
+    badge.textContent=n;
+    let win=0;
+    for(const [k,amt] of Object.entries(bets)){
+      const [t,v]=k.split(':');
+      if(t==='n' && parseInt(v,10)===n) win+=amt*36;
+      if(t==='c' && n!==0){ if(v==='red'&&reds.has(n)) win+=amt*2; if(v==='black'&&blacks.has(n)) win+=amt*2; }
+      if(t==='e' && n!==0){ if(v==='even'&&n%2===0) win+=amt*2; if(v==='odd'&&n%2===1) win+=amt*2; }
+      if(t==='l' && n!==0){ if(v==='low'&&n<=18) win+=amt*2; if(v==='high'&&n>=19) win+=amt*2; }
+      if(t==='d' && n!==0){ const d=parseInt(v,10); if((d===1&&n<=12)||(d===2&&n<=24&&n>=13)||(d===3&&n>=25)) win+=amt*3; }
     }
+    bets={}; undo=[]; clearBadges();
+    if(win>0){ balance+=win; $toast('Win '+win.toFixed(0)+' ✨'); } else { $toast('No win'); }
+    updateBal();
+    history.unshift(n); if(history.length>14) history.pop();
+    const last=document.getElementById('r_last'); last.innerHTML=''; history.forEach(x=>{ const s=document.createElement('span'); s.className='pill '+(x===0?'green':(reds.has(x)?'red':'black')); s.textContent=x; last.appendChild(s); });
+  }
 
-    // 2) Login/Logout
-    $login.addEventListener('click', async () => {
-      try {
-        if (!window.Pi || typeof Pi.authenticate !== 'function') {
-          alert('Pi SDK nije aktivan (otvori kroz sandbox.minepi.com/app).');
-          return;
-        }
-        setStatus('Prijavljivanje…');
-        const scopes = ['username'];
-        const auth = await Pi.authenticate(scopes, (p)=>console.log('incomplete payment', p));
-        window.__auth = auth; // čuvamo token i username
-        setUser(auth.user.username);
-        setStatus('Ulogovan');
-        $login.style.display = 'none';
-        $logout.style.display = 'inline-block';
-      } catch (e) {
-        console.error(e);
-        setStatus('Greška pri prijavi: ' + (e?.message || e));
-      }
-    });
-    $logout.addEventListener('click', () => {
-      window.__auth = undefined;
-      setUser('');
-      setStatus('Odjavljen (frontend reset)');
-      $logout.style.display = 'none';
-      $login.style.display  = 'inline-block';
-    });
-
-    // 3) Mini roulette engine (kao ranije)
-    const redNumbers   = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
-    const blackNumbers = new Set([2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35]);
-
-    const bankrollEl = document.getElementById('bankroll');
-    const chipSel    = document.getElementById('chip');
-    const chipView   = document.getElementById('chipView');
-    const betType    = document.getElementById('betType');
-    const numberWrap = document.getElementById('numberWrap');
-    const betNumber  = document.getElementById('betNumber');
-    const out        = document.getElementById('out');
-    const spinBtn    = document.getElementById('spin');
-    const topupBtn   = document.getElementById('topup');
-
-    let bankroll = 1000;
-    const KEY = 'roulette.bankroll';
-    const saved = localStorage.getItem(KEY);
-    if (saved) bankroll = Number(saved) || bankroll;
-    bankrollEl.textContent = bankroll;
-    function saveBankroll(){ localStorage.setItem(KEY, String(bankroll)); }
-
-    chipSel.addEventListener('change', ()=> chipView.textContent = chipSel.value);
-    betType.addEventListener('change', () => {
-      numberWrap.style.display = betType.value === 'number' ? 'block' : 'none';
-    });
-
-    // nacrtaj točak
-    const wheel = document.getElementById('wheel');
-    (function drawWheel(){
-      const numbers = Array.from({length:37}, (_,i)=>i);
-      const degPer  = 360 / numbers.length;
-      numbers.forEach((n, idx)=>{
-        const slice = document.createElement('div');
-        slice.className = 'slice';
-        slice.style.transform = `rotate(${idx*degPer}deg) skewY(${90-degPer}deg)`;
-        slice.style.background = n===0 ? '#2ecc71' : (redNumbers.has(n) ? '#e74c3c' : '#333');
-        slice.title = n;
-        wheel.appendChild(slice);
-      });
-    })();
-    function spinAnimationTo(resultNumber){
-      const total = 37, degPer = 360/total;
-      const targetDeg = (360*6) + (resultNumber*degPer) + (degPer/2);
-      wheel.style.transition = 'transform 3.6s cubic-bezier(.2,.8,.2,1)';
-      wheel.style.transform  = `rotate(-${targetDeg}deg)`;
-    }
-    function colorOf(n){ if (n===0) return 'green'; if (redNumbers.has(n)) return 'red'; if (blackNumbers.has(n)) return 'black'; return 'unknown'; }
-    function pay(bet, result){
-      const chip = Number(chipSel.value);
-      if (chip > bankroll) return { ok:false, msg:'Nema dovoljno credits-a.' };
-      bankroll -= chip;
-      let win = 0, hit = false;
-      switch(bet.type){
-        case 'number': hit = (result.number === bet.number); if (hit) win = chip * 35; break;
-        case 'red':    hit = (result.color==='red');         if (hit) win = chip * 2;  break;
-        case 'black':  hit = (result.color==='black');       if (hit) win = chip * 2;  break;
-        case 'even':   hit = (result.number!==0 && result.number%2===0); if (hit) win = chip * 2; break;
-        case 'odd':    hit = (result.number%2===1);          if (hit) win = chip * 2;  break;
-      }
-      bankroll += win;
-      bankrollEl.textContent = bankroll; saveBankroll();
-      return { ok:true, hit, win, net: win - chip };
-    }
-    function line(msg){ out.textContent = msg; }
-
-    spinBtn.addEventListener('click', async () => {
-      const bet = { type: betType.value, number: Number(betNumber.value) };
-      if (bet.type==='number' && (bet.number<0 || bet.number>36)) { line('Greška: broj mora biti 0–36.'); return; }
-      const resultNumber = Math.floor(Math.random()*37);
-      const result = { number: resultNumber, color: colorOf(resultNumber) };
-      spinAnimationTo(resultNumber);
-      await new Promise(r => setTimeout(r, 3600));
-      const p = pay(bet, result);
-      line(`Ispalo: ${result.number} (${result.color})
-Opklada: ${bet.type}${bet.type==='number' ? ' '+bet.number : ''}
-${p.ok ? (p.hit ? 'Pogodak! ' : 'Promašaj. ') : ''}Neto: ${p.net ?? '—'}`);
-    });
-
-    // 4) Pi Payment: top-up 10 credits = 1 π (testnet)
-    topupBtn.addEventListener('click', async () => {
-      if (!window.__auth?.accessToken) {
-        alert('Uloguj se prvo (Pi Login).');
-        return;
-      }
-      try {
-        setStatus('Kreiram payment…');
-        // 4.1 zatraži od servera payment-data
-        const res = await fetch('/.netlify/functions/create-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + window.__auth.accessToken },
-          body: JSON.stringify({ amount: 1, memo: 'Top-up 10 credits', metadata: { credits: 10 } })
-        });
-        const paymentData = await res.json();
-        if (!res.ok) throw new Error(paymentData?.error || 'create-payment fail');
-
-        // 4.2 pokreni Pi.createPayment
-        await Pi.createPayment(paymentData, {
-          onReadyForServerApproval: async (paymentId) => {
-            setStatus('Server approval…');
-            const r = await fetch('/.netlify/functions/approve-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ paymentId })
-            });
-            if (!r.ok) throw new Error('approve-payment fail');
-          },
-          onReadyForServerCompletion: async (paymentId, txid) => {
-            setStatus('Server completion…');
-            const r = await fetch('/.netlify/functions/complete-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ paymentId, txid })
-            });
-            if (!r.ok) throw new Error('complete-payment fail');
-
-            // uspeh → dodaj kredite
-            bankroll += 10; bankrollEl.textContent = bankroll; saveBankroll();
-            line('✅ Top-up uspešan: +10 credits');
-            setStatus('Plaćanje završeno');
-          },
-          onCancel: (paymentId) => {
-            setStatus('Otkazano');
-            fetch('/.netlify/functions/cancel-payment', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ paymentId }) });
-          },
-          onError: (error, payment) => {
-            console.error('Pi payment error:', error, payment);
-            setStatus('Greška pri plaćanju: ' + (error?.message || error));
-          }
-        });
-      } catch (e) {
-        console.error(e);
-        setStatus('Greška: ' + (e?.message || e));
-      }
-    });
-  </script>
-</body>
-</html>
+  /* expose a tiny API so you can hook Pi SDK */
+  window.RouletteAPI = {
+    setBalance(v){ balance = Number(v)||0; updateBal(); },
+    getBalance(){ return balance; },
+    getBets(){ return {...bets}; },
+    clearBets(){ for(const [k,amt] of Object.entries(bets)) balance+=amt; bets={}; undo=[]; clearBadges(); updateBal(); },
+    spin(){ document.getElementById('r_spin').click(); }
+  };
+})('roulette-app');
+</script>
