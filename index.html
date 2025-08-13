@@ -3,58 +3,103 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pi Sandbox + Netlify</title>
+  <title>Roulette · Pi Sandbox</title>
 
   <!-- Pi SDK -->
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
   <style>
     :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-    body { margin: 2rem; }
-    h1 { margin-bottom: 1rem; }
-    .row { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
-    button { padding: .7rem 1rem; border: 0; border-radius: .5rem; cursor: pointer; }
-    #out { white-space: pre-wrap; padding: 1rem; border: 1px solid #ddd; border-radius: .5rem; min-height: 3rem; }
-    .card { padding: 1rem; border: 1px solid #eee; border-radius: .5rem; margin-bottom: 1rem; }
-    .muted { color: #666; font-size: .9rem; }
-    #user { font-weight: 600; }
+    body { margin: 24px; }
+    h1 { margin: 0 0 16px; }
+    .bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
+    button { padding:.7rem 1rem; border:0; border-radius:10px; cursor:pointer; }
+    .card { border:1px solid #e5e5e5; border-radius:12px; padding:16px; margin-bottom:16px; }
+    .muted { color:#666; font-size:.9rem; }
+    #user { font-weight:600; }
+    #wheel { width:260px; height:260px; border-radius:50%; border:6px solid #222; margin:0 auto 16px; position:relative; overflow:hidden; }
+    #wheel .slice { position:absolute; width:50%; height:50%; top:50%; left:50%; transform-origin:0% 0%; }
+    #pointer { width:0; height:0; border-left:12px solid transparent; border-right:12px solid transparent; border-bottom:18px solid #ff5252; margin:0 auto 8px; }
+    #out { white-space:pre-wrap; border:1px solid #eee; border-radius:10px; padding:12px; min-height:3rem; }
+    .grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
+    label { display:block; font-size:.9rem; margin-bottom:6px; color:#444; }
+    input, select { width:100%; padding:.6rem .7rem; border:1px solid #ddd; border-radius:8px; }
+    .pill { display:inline-block; padding:.25rem .55rem; border:1px solid #ddd; border-radius:999px; margin-right:6px; font-size:.85rem; }
+    .ok { color:#0a7; }
+    .err { color:#d33; }
   </style>
 </head>
 <body>
-  <h1>Pi Sandbox + Netlify</h1>
+  <h1>Roulette · Pi Sandbox</h1>
 
   <div class="card">
-    <div class="row">
-      <button id="btnLogin">Pi Login (sandbox)</button>
+    <div class="bar">
+      <button id="btnLogin">Pi Login</button>
       <button id="btnLogout" style="display:none">Logout</button>
-      <button id="btnHello">Pozovi <code>/.netlify/functions/hello</code></button>
+      <span class="muted">Status: <span id="status">inicijalizujem…</span></span>
+      <span class="muted">Korisnik: <span id="user">niste ulogovani</span></span>
+      <span class="pill">Bankroll: <span id="bankroll">1000</span> credits</span>
+      <span class="pill">Chip: <span id="chipView">10</span></span>
     </div>
-    <div class="muted">Status: <span id="status">inicijalizujem…</span></div>
-    <div class="muted">Korisnik: <span id="user">niste ulogovani</span></div>
+
+    <div class="grid">
+      <div>
+        <label>Vrsta opklade</label>
+        <select id="betType">
+          <option value="number">Tačan broj (0–36) — 35:1</option>
+          <option value="red">Crveno — 1:1</option>
+          <option value="black">Crno — 1:1</option>
+          <option value="even">Parno — 1:1</option>
+          <option value="odd">Neparno — 1:1</option>
+        </select>
+      </div>
+      <div id="numberWrap">
+        <label>Broj (0–36)</label>
+        <input id="betNumber" type="number" min="0" max="36" value="7"/>
+      </div>
+      <div>
+        <label>Iznos (chip)</label>
+        <select id="chip">
+          <option value="1">1</option>
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+      </div>
+      <div style="display:flex; align-items:flex-end;">
+        <button id="spin">SPIN</button>
+      </div>
+    </div>
+    <div class="muted">Napomena: ovo je lokalna “credits” ekonomija za testiranje. U sledećem koraku dodaćemo Pi plaćanje.</div>
   </div>
 
-  <div id="out">Spremno.</div>
+  <div id="pointer"></div>
+  <div id="wheel" aria-label="roulette-wheel"></div>
+
+  <div class="card">
+    <div class="muted">Rezultat</div>
+    <div id="out">Spremno.</div>
+  </div>
 
   <script>
+    // ------------------ Pi SDK init ------------------
     const $status = document.getElementById('status');
     const $user   = document.getElementById('user');
-    const $out    = document.getElementById('out');
     const $login  = document.getElementById('btnLogin');
     const $logout = document.getElementById('btnLogout');
-    const $hello  = document.getElementById('btnHello');
 
     function setStatus(msg){ $status.textContent = msg; }
     function setUser(name){  $user.textContent   = name || 'niste ulogovani'; }
 
-    // 1) Inicijalizacija Pi SDK u sandbox modu
     if (window.Pi && typeof Pi.init === 'function') {
       Pi.init({ version: "2.0", sandbox: true });
       setStatus('Pi SDK učitan (sandbox)');
     } else {
-      setStatus('Pi SDK NIJE učitan – otvori ovu stranicu preko "Run App in the Sandbox".');
+      setStatus('Pi SDK NIJE učitan – otvori stranicu preko "Run App in the Sandbox".');
     }
 
-    // 2) Login
     $login.addEventListener('click', async () => {
       try {
         if (!window.Pi || typeof Pi.authenticate !== 'function') {
@@ -64,36 +109,156 @@
         setStatus('Prijavljivanje…');
         const scopes = ['username'];
         const auth = await Pi.authenticate(scopes, (p)=>console.log('Incomplete payment:', p));
+        window.__auth = auth; // sačuvaj za kasnije (npr. slanje tokena serveru)
         setUser(auth.user.username);
         setStatus('Ulogovan');
         $login.style.display = 'none';
         $logout.style.display = 'inline-block';
-        // Ako ti ikad zatreba token na serveru:
-        // console.log('accessToken:', auth.accessToken);
       } catch (e) {
         console.error(e);
         setStatus('Greška pri prijavi: ' + (e?.message || e));
       }
     });
 
-    // 3) Logout (frontend-only reset)
     $logout.addEventListener('click', () => {
+      window.__auth = undefined;
       setUser('');
       setStatus('Odjavljen (frontend reset)');
       $logout.style.display = 'none';
       $login.style.display  = 'inline-block';
     });
 
-    // 4) Netlify funkcija
-    $hello.addEventListener('click', async () => {
-      $out.textContent = 'Pozivam /.netlify/functions/hello …';
-      try {
-        const res  = await fetch('/.netlify/functions/hello', { method: 'GET' });
-        const text = await res.text();
-        $out.textContent = `Status: ${res.status}\n\n${text}`;
-      } catch (e) {
-        $out.textContent = 'Greška: ' + e.message;
+    // ------------------ Mini roulette engine ------------------
+    const redNumbers   = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+    const blackNumbers = new Set([2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35]);
+
+    const bankrollEl = document.getElementById('bankroll');
+    const chipSel    = document.getElementById('chip');
+    const chipView   = document.getElementById('chipView');
+    const betType    = document.getElementById('betType');
+    const numberWrap = document.getElementById('numberWrap');
+    const betNumber  = document.getElementById('betNumber');
+    const out        = document.getElementById('out');
+    const spinBtn    = document.getElementById('spin');
+
+    let bankroll = 1000;
+    chipSel.addEventListener('change', ()=> chipView.textContent = chipSel.value);
+
+    betType.addEventListener('change', () => {
+      numberWrap.style.display = betType.value === 'number' ? 'block' : 'none';
+    });
+
+    // Draw wheel (simple 37-slice ring)
+    const wheel = document.getElementById('wheel');
+    (function drawWheel(){
+      const numbers = Array.from({length:37}, (_,i)=>i);
+      const degPer  = 360 / numbers.length;
+      numbers.forEach((n, idx)=>{
+        const slice = document.createElement('div');
+        slice.className = 'slice';
+        slice.style.transform = `rotate(${idx*degPer}deg) skewY(${90-degPer}deg)`;
+        slice.style.background = n===0 ? '#2ecc71' : (redNumbers.has(n) ? '#e74c3c' : '#333');
+        slice.title = n;
+        wheel.appendChild(slice);
+      });
+    })();
+
+    function spinAnimationTo(resultNumber){
+      const total = 37;
+      const degPer = 360/total;
+      const index = resultNumber; // naš raspored je 0..36 redom
+      const targetDeg = (360*6) + (index*degPer) + (degPer/2); // 6 krugova + centriranje
+      wheel.style.transition = 'transform 3.6s cubic-bezier(.2,.8,.2,1)';
+      wheel.style.transform  = `rotate(-${targetDeg}deg)`;
+    }
+
+    function colorOf(n){
+      if (n===0) return 'green';
+      if (redNumbers.has(n)) return 'red';
+      if (blackNumbers.has(n)) return 'black';
+      return 'unknown';
+    }
+
+    function pay(bet, result){
+      const chip = Number(chipSel.value);
+      if (chip > bankroll) return { ok:false, msg:'Nema dovoljno credits-a.' };
+
+      bankroll -= chip; // ulog
+      let win = 0, hit = false;
+
+      switch(bet.type){
+        case 'number':
+          hit = (result.number === bet.number);
+          if (hit) win = chip * 35;
+          break;
+        case 'red':
+          hit = (result.color==='red');
+          if (hit) win = chip * 2;
+          break;
+        case 'black':
+          hit = (result.color==='black');
+          if (hit) win = chip * 2;
+          break;
+        case 'even':
+          hit = (result.number!==0 && result.number%2===0);
+          if (hit) win = chip * 2;
+          break;
+        case 'odd':
+          hit = (result.number%2===1);
+          if (hit) win = chip * 2;
+          break;
       }
+
+      bankroll += win;
+      bankrollEl.textContent = bankroll;
+      return { ok:true, hit, win, net: win - chip };
+    }
+
+    function line(msg){ out.textContent = msg; }
+
+    spinBtn.addEventListener('click', async () => {
+      // priprema opklade
+      const bet = { type: betType.value, number: Number(betNumber.value) };
+      if (bet.type==='number' && (bet.number<0 || bet.number>36)) {
+        line('Greška: broj mora biti 0–36.');
+        return;
+      }
+
+      // SPIN – “pseudo RNG”
+      const resultNumber = Math.floor(Math.random()*37); // 0..36
+      const result = { number: resultNumber, color: colorOf(resultNumber) };
+
+      // animacija
+      spinAnimationTo(resultNumber);
+
+      // sačekaj trajanje animacije (3.6s)
+      await new Promise(r => setTimeout(r, 3600));
+
+      // obračun
+      const p = pay(bet, result);
+
+      const tag = p.hit ? 'ok' : 'err';
+      line(
+        `Ispalo: ${result.number} (${result.color})
+Opklada: ${bet.type}${bet.type==='number' ? ' '+bet.number : ''}
+${p.ok ? (p.hit ? 'Pogodak! ' : 'Promašaj. ') : ''}Neto: ${p.net ?? '—'}`
+      );
+
+      // —— HOOK za Pi plaćanje (sledeći korak) ——
+      // Ovde možeš pozvati backend endpoint koji će kreirati Pi Payment
+      // za npr. kupovinu kredita, ili naplatu buy-in-a.
+      // Primer (samo skeleton, kad budeš dodavao):
+      /*
+      if (window.__auth) {
+        const res = await fetch('/.netlify/functions/create-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + window.__auth.accessToken },
+          body: JSON.stringify({ amount: 1, memo: 'Roulette credit top-up' })
+        });
+        const paymentData = await res.json();
+        // await Pi.createPayment(paymentData, { onReadyForServerApproval, onReadyForServerCompletion, onCancel, onError })
+      }
+      */
     });
   </script>
 </body>
