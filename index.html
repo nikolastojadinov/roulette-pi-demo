@@ -10,13 +10,17 @@
 
   <style>
     body { font-family: system-ui, sans-serif; margin: 2rem; }
-    button { padding: .7rem 1rem; border: 0; border-radius: .5rem; cursor: pointer; }
+    button { padding: .7rem 1rem; border: 0; border-radius: .5rem; cursor: pointer; margin-bottom: 1rem; }
     #out { white-space: pre-wrap; margin-top: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: .5rem; }
   </style>
 </head>
 <body>
   <h1>Pi Sandbox + Netlify</h1>
 
+  <!-- Dugme za Pi login -->
+  <button id="btnLogin">Pi Login (sandbox)</button>
+
+  <!-- Dugme za Netlify funkciju -->
   <p>
     <button id="btn">Pozovi <code>/.netlify/functions/hello</code></button>
   </p>
@@ -24,15 +28,28 @@
   <div id="out">Spremno.</div>
 
   <script>
-    // --- 1) Inicijalizacija Pi SDK u sandbox modu ---
-    // Obavezno za korak "Run Development App in the Sandbox"
+    // --- Inicijalizacija Pi SDK u sandbox modu ---
     if (window.Pi && typeof Pi.init === 'function') {
       Pi.init({ version: "2.0", sandbox: true });
     } else {
       console.warn("Pi SDK nije učitan.");
     }
 
-    // --- 2) Tvoj postojeći kod (blago doteran) ---
+    // --- Pi Login dugme ---
+    document.getElementById('btnLogin').addEventListener('click', async () => {
+      try {
+        const scopes = ['username']; // samo username za test
+        const auth = await Pi.authenticate(scopes, (payment) => {
+          console.log('Incomplete payment:', payment);
+        });
+        alert('Ulogovan: ' + auth.user.username);
+        console.log('Auth result:', auth);
+      } catch (e) {
+        alert('Pi auth greška: ' + e.message);
+      }
+    });
+
+    // --- Tvoj postojeći kod za Netlify funkciju ---
     const out = document.getElementById('out');
 
     document.getElementById('btn').addEventListener('click', async () => {
@@ -45,9 +62,6 @@
         out.textContent = 'Greška: ' + e.message;
       }
     });
-
-    // (opciono) Primer kako da proveriš da li smo u sandbox režimu:
-    // out.textContent += "\n\nPi sandbox: " + (Pi && Pi.isSandbox ? "DA" : "NE/NEPOZNATO");
   </script>
 </body>
 </html>
