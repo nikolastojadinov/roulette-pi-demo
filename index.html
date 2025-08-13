@@ -1,68 +1,53 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="sr">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pi Roulette</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Pi Sandbox + Netlify demo</title>
+
+  <!-- Pi SDK -->
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; }
+    button { padding: .7rem 1rem; border: 0; border-radius: .5rem; cursor: pointer; }
+    #out { white-space: pre-wrap; margin-top: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: .5rem; }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>Pi Roulette</h1>
-    <div class="bankroll">
-      Bankroll: <span id="bankroll">1000</span>
-      <label>Chip:</label>
-      <select id="chip">
-        <option value="1">1</option>
-        <option value="5" selected>5</option>
-        <option value="25">25</option>
-        <option value="100">100</option>
-      </select>
-      <button id="clearBets" class="ghost">Clear Bets</button>
-    </div>
-  </header>
+  <h1>Pi Sandbox + Netlify</h1>
 
-  <main>
-    <section class="table-area">
-      <canvas id="wheel" width="480" height="480" aria-label="Roulette wheel"></canvas>
+  <p>
+    <button id="btn">Pozovi <code>/.netlify/functions/hello</code></button>
+  </p>
 
-      <div class="layout">
-        <div class="grid" id="numberGrid" aria-label="Betting grid"></div>
+  <div id="out">Spremno.</div>
 
-        <div class="outside-bets">
-          <button data-bet="1st12" class="bet">1st 12</button>
-          <button data-bet="2nd12" class="bet">2nd 12</button>
-          <button data-bet="3rd12" class="bet">3rd 12</button>
+  <script>
+    // --- 1) Inicijalizacija Pi SDK u sandbox modu ---
+    // Obavezno za korak "Run Development App in the Sandbox"
+    if (window.Pi && typeof Pi.init === 'function') {
+      Pi.init({ version: "2.0", sandbox: true });
+    } else {
+      console.warn("Pi SDK nije učitan.");
+    }
 
-          <button data-bet="1to18" class="bet">1 to 18</button>
-          <button data-bet="even" class="bet">EVEN</button>
-          <button data-bet="gold" class="bet">GOLD</button>
-          <button data-bet="purple" class="bet">PURPLE</button>
-          <button data-bet="odd" class="bet">ODD</button>
-          <button data-bet="19to36" class="bet">19 to 36</button>
+    // --- 2) Tvoj postojeći kod (blago doteran) ---
+    const out = document.getElementById('out');
 
-          <button data-bet="col1" class="bet">2 to 1 ↥</button>
-          <button data-bet="col2" class="bet">2 to 1 ↥</button>
-          <button data-bet="col3" class="bet">2 to 1 ↥</button>
-        </div>
-      </div>
-    </section>
+    document.getElementById('btn').addEventListener('click', async () => {
+      out.textContent = 'Pozivam /.netlify/functions/hello …';
+      try {
+        const res  = await fetch('/.netlify/functions/hello', { method: 'GET' });
+        const text = await res.text();
+        out.textContent = `Status: ${res.status}\n\n${text}`;
+      } catch (e) {
+        out.textContent = 'Greška: ' + e.message;
+      }
+    });
 
-    <section class="controls">
-      <button id="spin">SPIN</button>
-      <div class="status">
-        <div>Last number: <span id="lastNumber">—</span></div>
-        <div>Result color: <span id="lastColor">—</span></div>
-        <div>Total bet: <span id="totalBet">0</span></div>
-        <div>Win/Loss: <span id="lastPayout">0</span></div>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <small>European roulette • Colors: GOLD (replaces red) & PURPLE (replaces black) • 0 is green</small>
-  </footer>
-
-  <script src="app.js"></script>
+    // (opciono) Primer kako da proveriš da li smo u sandbox režimu:
+    // out.textContent += "\n\nPi sandbox: " + (Pi && Pi.isSandbox ? "DA" : "NE/NEPOZNATO");
+  </script>
 </body>
 </html>
