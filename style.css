@@ -6,7 +6,7 @@
   --muted:#cfe5da;
   --shadow:0 18px 40px rgba(0,0,0,.45);
 
-  /* Theme for Purple/Gold roulette */
+  /* Purple/Gold theme */
   --purple:#5b3aa8;
   --purple-deep:#4a2a96;
   --gold:#f2c65c;
@@ -14,7 +14,6 @@
   --zero:#0aa56e;
 }
 
-/* ===== base ===== */
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
@@ -24,20 +23,23 @@ body{
     radial-gradient(1400px 700px at -20% -10%, #0c7b5a22, transparent 60%),
     radial-gradient(1600px 800px at 120% 0%, #178c6930, transparent 60%);
 }
+
+/* Header band */
 .container{max-width:1100px;margin:14px auto;padding:10px}
 .hband{
   display:flex;align-items:center;justify-content:space-between;
-  padding:12px 16px;border-radius:14px;background:linear-gradient(180deg,#184f3d,#0d2c23);
+  padding:12px 16px;border-radius:14px;
+  background:linear-gradient(180deg,#184f3d,#0d2c23);
   border:1px solid #ffffff18;box-shadow:var(--shadow);margin-bottom:12px
 }
 .brand{font-family:Georgia,serif;font-weight:800;font-size:28px;letter-spacing:.4px;color:#f3e7bf}
 .card{background:linear-gradient(180deg,#145340,#0b2e25);border:1px solid #ffffff18;border-radius:18px;padding:14px;box-shadow:var(--shadow)}
 
-/* ===== layout ===== */
+/* Layout */
 .grid{display:grid;gap:14px;grid-template-columns:1fr}
 @media (min-width:960px){ .grid{grid-template-columns:1.1fr .9fr} }
 
-/* ===== wheel ===== */
+/* Wheel */
 .wcard{background:linear-gradient(180deg,#cfa33f,#a87e25);border-radius:22px;padding:14px;box-shadow:inset 0 2px 16px #0003,var(--shadow)}
 .wheel-wrap{background:linear-gradient(180deg,#163c2f,#0d2a22);border-radius:18px;padding:16px;border:1px solid #0006}
 .wheel{
@@ -59,14 +61,14 @@ body{
   width:16px;height:22px;border-radius:8px;z-index:4;
   background:radial-gradient(circle at 50% 20%,#fff,#e7d48a 60%,#6d521b);box-shadow:0 6px 14px rgba(0,0,0,.65)
 }
-/* ball kept in screen space by counter-rotating orbit */
+/* Ball kept fixed by orbit counter-rotation */
 .orbit{position:absolute;inset:0;transform-origin:50% 50%;z-index:5;pointer-events:none;will-change:transform}
 .ball{
   position:absolute;left:50%;top:50%;width:20px;height:20px;border-radius:50%;
   background:radial-gradient(circle at 35% 35%,#fff,#f7e5b8 60%,#caa85a);box-shadow:0 4px 8px rgba(0,0,0,.45)
 }
 
-/* ===== controls ===== */
+/* Controls */
 .controls{display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:14px}
 .btn{
   padding:14px 22px;border-radius:999px;cursor:pointer;font-weight:900;letter-spacing:.5px;
@@ -74,9 +76,12 @@ body{
   box-shadow:0 12px 20px rgba(0,0,0,.35),inset 0 -2px 0 #0003
 }
 
-/* ===== table ===== */
+/* Table */
 .table{background:linear-gradient(180deg,#123c2e,#0d2a22);border:1px solid #ffffff18;border-radius:16px;padding:12px;box-shadow:inset 0 0 0 2px #0000002a}
-.board{display:grid;gap:10px;grid-template-columns:repeat(12,1fr);grid-auto-rows:48px}
+.board{
+  display:grid;gap:10px;grid-template-columns:60px repeat(12,1fr); /* first column is 0 */
+  grid-auto-rows:48px
+}
 @media (min-width:960px){ .board{grid-auto-rows:52px} }
 .cell{
   display:grid;place-items:center;font-weight:800;border-radius:12px;cursor:pointer;position:relative;
@@ -96,7 +101,7 @@ body{
 
 .bet-badge{position:absolute;bottom:6px;right:6px;pointer-events:none;font-size:12px;font-weight:800;padding:4px 6px;border-radius:10px;background:#0b2e25;border:1px solid #ffffff22}
 
-/* ===== chips ===== */
+/* Chips */
 .chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:12px}
 .chip{
   width:58px;height:58px;border-radius:50%;display:grid;place-items:center;cursor:pointer;font-weight:900;color:#111;position:relative;
