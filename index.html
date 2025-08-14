@@ -2,134 +2,356 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Roulette · Exact Center Landing</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Purple • Gold Roulette</title>
 <style>
-  :root{ --felt:#0A3A2E; --gold:#D8B76A; --ink:#F6F7F4 }
-  html,body{margin:0;height:100%;background:var(--felt);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--ink)}
-  .wrap{max-width:440px;margin:0 auto;padding:14px}
-  .card{border-radius:18px;padding:14px;background:radial-gradient(120% 140% at 50% -30%,#1c3b2f,#0b1f18);border:1px solid #ffffff1f;box-shadow:0 14px 40px rgba(0,0,0,.45)}
-  .title{font:800 28px/1 Georgia,serif;letter-spacing:.4px;color:#EAD6A0;margin:0 0 8px}
+:root{
+  --bg:#0c5a41;            /* casino green background */
+  --panel:#0f3d2d;         /* dark panel */
+  --felt:#0b3a2e;
+  --gold:#f2c65c;          /* GOLD pocket/table color */
+  --gold-deep:#caa243;
+  --purple:#5b3aa8;        /* PURPLE pocket/table color */
+  --green:#0aa56e;         /* zero */
+  --ink:#f7f7f4;
+  --muted:#cfe5da;
+  --shadow:0 18px 40px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; color:var(--ink); background:var(--bg);
+  font-family:Inter,ui-sans-serif,-apple-system,Segoe UI,Roboto,Arial;
+  background-image:radial-gradient(1400px 700px at -20% -10%,#0c7b5a22,transparent 60%), radial-gradient(1600px 800px at 120% 0%,#178c6930,transparent 60%);
+}
 
-  /* Wheel */
-  .wheel{width:min(88vw,380px);height:min(88vw,380px);border-radius:50%;position:relative;overflow:hidden;
-         background:radial-gradient(circle at 50% 50%,#55301d 0,#2f180e 45%,#1a0d08 70%);
-         box-shadow:inset 0 0 0 12px #3b1f12,inset 0 0 0 28px #7a3e22,0 14px 30px rgba(0,0,0,.6);
-         will-change:transform;transform:translateZ(0)}
-  .wheel svg{position:absolute;inset:0;width:100%;height:100%}
-  .hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:28%;height:28%;border-radius:50%;
-        background:radial-gradient(circle at 35% 35%,#f7e6b5,#d4b46a 55%,#a78333 70%,#6b521b);
-        display:grid;place-items:center;z-index:3;box-shadow:inset 0 2px 6px rgba(255,255,255,.45),0 10px 26px rgba(0,0,0,.65)}
-  .badge{font:800 26px/1 Georgia,serif;color:#1c1606;background:linear-gradient(180deg,#f3e4b2,#d6b86f);padding:6px 12px;border-radius:999px;border:1px solid #0003}
-  .peg{position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:12px;height:20px;border-radius:6px;background:radial-gradient(circle at 50% 20%,#fff,#e7d48a 60%,#6d521b);box-shadow:0 6px 14px rgba(0,0,0,.65);z-index:4}
+/* layout */
+.container{max-width:1100px;margin:14px auto;padding:10px}
+.grid{
+  display:grid; gap:14px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 960px){
+  .grid{ grid-template-columns: 1.1fr .9fr; }
+}
+.panel{
+  background:linear-gradient(180deg,#145340,#0b2e25);
+  border:1px solid #ffffff18; border-radius:18px; padding:14px; box-shadow:var(--shadow);
+}
 
-  /* Ball stays fixed in screen space by counter-rotating the orbit = -wheelAngle */
-  .orbit{position:absolute;inset:0;transform-origin:50% 50%;z-index:5;pointer-events:none;will-change:transform}
-  .ball{position:absolute;left:50%;top:50%;width:18px;height:18px;border-radius:50%;
-        background:radial-gradient(circle at 35% 35%,#fff,#f7e5b8 60%,#caa85a);box-shadow:0 4px 8px rgba(0,0,0,.45)}
+/* heading band */
+.hband{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 16px; border-radius:14px;
+  background:linear-gradient(180deg,#184f3d,#0d2c23); border:1px solid #ffffff18; margin-bottom:10px;
+}
+.brand{font-family:Georgia,serif; letter-spacing:.5px; font-weight:800; font-size:28px; color:#f3e7bf}
 
-  .row{display:flex;gap:10px;justify-content:center;margin-top:10px}
-  .btn{padding:14px 24px;border-radius:999px;border:1px solid #0003;background:linear-gradient(180deg,#ead79c,#d0af5b);
-       color:#231a07;font-weight:900;letter-spacing:.6px;cursor:pointer;box-shadow:0 10px 18px rgba(0,0,0,.35),inset 0 -2px 0 #0003}
-  .pill{padding:4px 10px;border-radius:999px;border:1px solid #ffffff22;background:#13241d;font-size:12px}
+/* WHEEL ----------------------------------------------------- */
+.wcard{background:linear-gradient(180deg,#cfa33f,#a87e25); border-radius:22px; padding:14px; box-shadow:inset 0 2px 16px #00000030, var(--shadow)}
+.wheel-wrap{background:linear-gradient(180deg,#163c2f,#0d2a22); border-radius:18px; padding:16px; border:1px solid #00000030}
+.wheel{
+  width:min(90vw,520px); height:min(90vw,520px); margin:auto;
+  border-radius:50%; position:relative; overflow:hidden;
+  background:radial-gradient(circle at 50% 50%, #5d3b14 0, #3b200d 45%, #1a0d08 70%);
+  box-shadow:inset 0 0 0 12px #5b2e12, inset 0 0 0 28px #8a4a1d, 0 14px 30px rgba(0,0,0,.6);
+  will-change:transform; transform:translateZ(0);
+}
+.wheel svg{position:absolute; inset:0; width:100%; height:100%}
+.hub{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:28%; height:28%;
+  border-radius:50%; background:radial-gradient(circle at 35% 35%, #f7e6b5, #d4b46a 55%, #a78333 70%, #6b521b);
+  box-shadow:inset 0 2px 6px rgba(255,255,255,.45), 0 10px 26px rgba(0,0,0,.65);
+  display:grid; place-items:center; z-index:3;
+}
+.badge{font:800 30px/1 Georgia,serif; color:#1c1606; background:linear-gradient(180deg,#f3e4b2,#d6b86f); padding:8px 14px; border-radius:999px; border:1px solid #0003}
+.peg{position:absolute; top:-8px; left:50%; transform:translateX(-50%); width:16px; height:22px; border-radius:8px;
+  background:radial-gradient(circle at 50% 20%,#fff,#e7d48a 60%,#6d521b); box-shadow:0 6px 14px rgba(0,0,0,.65); z-index:4}
+
+/* Ball stays fixed; orbit counter-rotates */
+.orbit{position:absolute; inset:0; transform-origin:50% 50%; z-index:5; pointer-events:none; will-change:transform}
+.ball{
+  position:absolute; left:50%; top:50%; width:20px; height:20px; border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, #fff, #f7e5b8 60%, #caa85a);
+  box-shadow:0 4px 8px rgba(0,0,0,.45);
+}
+
+/* controls */
+.controls{display:flex; gap:12px; justify-content:center; align-items:center; flex-wrap:wrap; margin-top:14px}
+.btn{
+  padding:14px 22px; border-radius:999px; cursor:pointer;
+  font-weight:900; letter-spacing:.5px; border:1px solid #0004;
+  background:linear-gradient(180deg,#f1cd72,#d1a54a); color:#1f1809;
+  box-shadow:0 12px 20px rgba(0,0,0,.35), inset 0 -2px 0 #0003;
+}
+
+/* TABLE ----------------------------------------------------- */
+.table{background:linear-gradient(180deg,#123c2e,#0d2a22); border:1px solid #ffffff18; border-radius:16px; padding:12px; box-shadow:inset 0 0 0 2px #0000002a}
+.board{
+  display:grid; gap:10px;
+  grid-template-columns: repeat(12, 1fr);
+  grid-auto-rows: 48px;
+}
+@media (min-width:960px){ .board{ grid-auto-rows: 52px; } }
+
+.cell{
+  display:grid; place-items:center; font-weight:800; border-radius:12px; cursor:pointer; position:relative;
+  border:1px solid #00000033; color:#fff; text-shadow:0 1px 0 #0006;
+}
+.cell.purple{ background:linear-gradient(180deg, #6a49c2, #4e2b9b); }
+.cell.gold{   background:linear-gradient(180deg, #f3c85f, #c79f3c); color:#3a2b05; text-shadow:none; }
+.cell.zero{   background:linear-gradient(180deg, #0fc080, #0a8d60); }
+
+.outside-row{ display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin-top:10px }
+.outside{ display:grid; place-items:center; border-radius:12px; cursor:pointer; font-weight:800; border:1px solid #00000033; padding:10px 8px; }
+.outside.purple{ background:linear-gradient(180deg,#6a49c2,#4e2b9b) }
+.outside.gold{   background:linear-gradient(180deg,#f3c85f,#c79f3c); color:#2a2006 }
+.outside.neutral{ background:linear-gradient(180deg,#244e41,#17382e) }
+
+.bet-badge{ position:absolute; bottom:6px; right:6px; pointer-events:none; font-size:12px; font-weight:800; padding:4px 6px; border-radius:10px; background:#0b2e25; border:1px solid #ffffff22 }
+
+/* chips */
+.chips{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:12px }
+.chip{ width:58px; height:58px; border-radius:50%; display:grid; place-items:center; cursor:pointer; font-weight:900; color:#111; position:relative; border:6px double #0005; box-shadow:0 12px 20px rgba(0,0,0,.4), inset 0 0 0 3px #fff6 }
+.chip:before{ content:""; position:absolute; inset:0; border-radius:50%; background:repeating-conic-gradient(from 0deg,#0004 0 6deg,transparent 6deg 18deg); mask:radial-gradient(circle,transparent 58%,#000 59%) }
+.chip > span{ position:relative; z-index:1; text-shadow:0 1px 0 #fff8 }
+.chip.sel{ outline:3px solid #fff9; outline-offset:2px; transform:translateY(-1px) }
+.chip[data-v="1"]{ background:#2e7d32; color:#fff }
+.chip[data-v="5"]{ background:#c0392b; color:#fff }
+.chip[data-v="10"]{ background:#2980b9; color:#fff }
+.chip[data-v="25"]{ background:#8e44ad; color:#fff }
+.chip[data-v="50"]{ background:#1e1e1e; color:#f1f1f1 }
+.chip[data-v="100"]{ background:#f1c40f; color:#1b1607 }
 </style>
 </head>
 <body>
-<div class="wrap card">
-  <div class="title">ROULETTE</div>
-  <div class="wheel" id="wheel">
-    <svg viewBox="0 0 100 100" id="wheelSVG"></svg>
-    <div class="orbit" id="orbit"><div class="ball" id="ball"></div></div>
-    <div class="hub"><div class="badge" id="badge">—</div></div>
-    <div class="peg"></div>
-  </div>
-  <div class="row">
-    <button class="btn" id="spin">SPIN</button>
-    <span class="pill">Last: <span id="last">—</span></span>
+<div class="container">
+  <div class="hband"><div class="brand">ROULETTE</div><div>Balance: <strong id="bal">1000</strong></div></div>
+
+  <div class="grid">
+    <!-- Left: Wheel -->
+    <div class="panel wcard">
+      <div class="wheel-wrap">
+        <div class="wheel" id="wheel">
+          <svg viewBox="0 0 100 100" id="wheelSvg"></svg>
+          <div class="orbit" id="orbit"><div class="ball" id="ball"></div></div>
+          <div class="hub"><div class="badge" id="badge">—</div></div>
+          <div class="peg"></div>
+        </div>
+        <div class="controls">
+          <button class="btn" id="spin">SPIN</button>
+          <div>Last: <strong id="last">—</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Table -->
+    <div class="panel table">
+      <div class="board" id="board"></div>
+      <div class="outside-row">
+        <div class="outside neutral" data-type="dozen" data-dozen="1">1st 12</div>
+        <div class="outside neutral" data-type="dozen" data-dozen="2">2nd 12</div>
+        <div class="outside neutral" data-type="dozen" data-dozen="3">3rd 12</div>
+
+        <div class="outside neutral" data-type="evenodd" data-eo="even">EVEN</div>
+        <div class="outside gold"    data-type="color"   data-color="gold">GOLD</div>
+        <div class="outside neutral" data-type="lowhigh" data-lh="low">1 to 18</div>
+
+        <div class="outside purple"  data-type="color"   data-color="purple">PURPLE</div>
+        <div class="outside neutral" data-type="evenodd" data-eo="odd">ODD</div>
+        <div class="outside neutral" data-type="lowhigh" data-lh="high">19 to 36</div>
+
+        <div class="outside neutral" data-type="column" data-col="1">2 to 1 (col 1)</div>
+        <div class="outside neutral" data-type="column" data-col="2">2 to 1 (col 2)</div>
+        <div class="outside neutral" data-type="column" data-col="3">2 to 1 (col 3)</div>
+      </div>
+
+      <div class="chips" id="chips">
+        <div class="chip sel"  data-v="1"><span>1</span></div>
+        <div class="chip" data-v="5"><span>5</span></div>
+        <div class="chip" data-v="10"><span>10</span></div>
+        <div class="chip" data-v="25"><span>25</span></div>
+        <div class="chip" data-v="50"><span>50</span></div>
+        <div class="chip" data-v="100"><span>100</span></div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-/* === precise landing wheel === */
+/* ======== DATA (European order; Purple replaces Red; Gold replaces Black) ======== */
 const ORDER=[0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
-const RED=new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+const PURPLE = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]); // former "red"
+const GOLD_SET = new Set(Array.from({length:36},(_,i)=>i+1).filter(n=>!PURPLE.has(n))); // former "black"
+const SWEEP = 360/ORDER.length;
 
-const wheel=document.getElementById('wheel');
-const svg=document.getElementById('wheelSVG');
-const orbit=document.getElementById('orbit');
-const ball=document.getElementById('ball');
-const spinBtn=document.getElementById('spin');
-const badge=document.getElementById('badge');
-const lastEl=document.getElementById('last');
+/* ======== BUILD WHEEL ======== */
+const wheel   = document.getElementById('wheel');
+const svg     = document.getElementById('wheelSvg');
+const orbit   = document.getElementById('orbit');
+const ball    = document.getElementById('ball');
+const badge   = document.getElementById('badge');
+const lastEl  = document.getElementById('last');
 
-const SWEEP=360/ORDER.length;
-let wheelAngle=0;                 // current transform angle (deg)
-const BALL_ANGLE=0;               // ball sits at right side (screen)
-
-function norm(a){ a%=360; if(a<0) a+=360; return a; }
-function pocketMid(idx){ return (idx+0.5)*SWEEP - 90; } // exact center of sector
-function easeOutCubic(t){ return 1-Math.pow(1-t,3); }
-
-/* Build pockets + labels once */
 (function buildWheel(){
-  const cx=50,cy=50,rO=49,rI=32,rT=41;
-  function polar(r,a){ const A=a*Math.PI/180; return {x:cx+r*Math.cos(A),y:cy+r*Math.sin(A)} }
-  function ann(r0,r1,a0,a1){const p1=polar(r1,a0),p2=polar(r1,a1),p3=polar(r0,a1),p4=polar(r0,a0);const la=(a1-a0)<=180?0:1;
-    return `M ${p1.x} ${p1.y} A ${r1} ${r1} 0 ${la} 1 ${p2.x} ${p2.y} L ${p3.x} ${p3.y} A ${r0} ${r0} 0 ${la} 0 ${p4.x} ${p4.y} Z`; }
+  const cx=50, cy=50, rO=49, rI=32, rT=41;
+  function polar(r,a){ const rad=a*Math.PI/180; return {x:cx+r*Math.cos(rad), y:cy+r*Math.sin(rad)} }
+  function ann(r0,r1,a0,a1){
+    const p1=polar(r1,a0), p2=polar(r1,a1), p3=polar(r0,a1), p4=polar(r0,a0); const la=(a1-a0)<=180?0:1;
+    return `M ${p1.x} ${p1.y} A ${r1} ${r1} 0 ${la} 1 ${p2.x} ${p2.y} L ${p3.x} ${p3.y} A ${r0} ${r0} 0 ${la} 0 ${p4.x} ${p4.y} Z`;
+  }
   ORDER.forEach((n,i)=>{
-    const a0=i*SWEEP-90, a1=a0+SWEEP, mid=(a0+a1)/2, fill=n===0?'#0c533f':(RED.has(n)?'#9b1f17':'#0f0f0f');
-    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('d',ann(rI,rO,a0,a1)); path.setAttribute('fill',fill); path.setAttribute('stroke','#222'); path.setAttribute('stroke-width','0.25'); svg.appendChild(path);
-    const t=document.createElementNS('http://www.w3.org/2000/svg','text'); const p=polar(rT,mid);
-    t.setAttribute('x',p.x); t.setAttribute('y',p.y+2); t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','4.2'); t.setAttribute('font-weight','800');
-    t.setAttribute('fill',n===0?'#cdebdc':'#eaeaea'); t.setAttribute('transform',`rotate(${mid+90},${p.x},${p.y})`); t.textContent=n; svg.appendChild(t);
+    const a0=i*SWEEP-90, a1=a0+SWEEP, mid=(a0+a1)/2;
+    const color = n===0 ? '#0aa56e' : (PURPLE.has(n)? getComputedStyle(document.documentElement).getPropertyValue('--purple') : getComputedStyle(document.documentElement).getPropertyValue('--gold'));
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', ann(rI,rO,a0,a1)); path.setAttribute('fill', color.trim()); path.setAttribute('stroke','#000'); path.setAttribute('stroke-width','0.25'); svg.appendChild(path);
+
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    const p = polar(rT, mid);
+    t.setAttribute('x', p.x); t.setAttribute('y', p.y+2); t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','4.2'); t.setAttribute('font-weight','800');
+    t.setAttribute('fill', n===0 ? '#e6fff4' : (PURPLE.has(n)?'#fff':'#2a2207'));
+    t.setAttribute('transform', `rotate(${mid+90},${p.x},${p.y})`);
+    t.textContent = n;
+    svg.appendChild(t);
   });
 })();
 
-/* Keep ball on rim responsively */
-function placeBall(){ const rim = wheel.offsetWidth*0.42; ball.style.transform=`translate(${rim}px,-9px)`; }
-addEventListener('resize', placeBall); placeBall();
+/* ======== BOARD (TABLE) ======== */
+const board = document.getElementById('board');
+const cells = {};
+for(let col=0; col<12; col++){
+  for(let r=2; r>=0; r--){
+    const n = col*3 + (3-r);
+    const d = document.createElement('div');
+    d.className = `cell ${n===0?'zero':(PURPLE.has(n)?'purple':'gold')}`;
+    d.textContent = n;
+    d.dataset.type='straight'; d.dataset.num=n;
+    board.appendChild(d);
+    cells[`n:${n}`]=d;
+  }
+}
+// add zero cell at top-left style (visual from screenshot)
+const zeroBtn = document.createElement('div');
+zeroBtn.className='cell zero'; zeroBtn.textContent='0'; zeroBtn.dataset.type='straight'; zeroBtn.dataset.num='0';
+zeroBtn.style.gridColumn='1 / 2'; zeroBtn.style.gridRow='1'; // just another zero for convenience
+// we won't append this duplicate to keep grid clean, zero stays on wheel only
 
-/* Core spin: orbit ALWAYS = -wheelAngle (+ tiny wobble) so ball is fixed on screen */
-function spinToIndex(idx, ms=2400, done=()=>{}){
-  const targetMid = pocketMid(idx);
-  const deltaToBall = norm(BALL_ANGLE - targetMid);   // how much we need to rotate
-  const from=wheelAngle, to=wheelAngle + 6*360 + deltaToBall;
+// outside map
+document.querySelectorAll('.outside').forEach(el=>{
+  let key='';
+  if(el.dataset.color) key=`c:${el.dataset.color}`;
+  if(el.dataset.eo)    key=`e:${el.dataset.eo}`;
+  if(el.dataset.lh)    key=`l:${el.dataset.lh}`;
+  if(el.dataset.dozen) key=`d:${el.dataset.dozen}`;
+  if(el.dataset.col)   key=`col:${el.dataset.col}`;
+  if(key) cells[key]=el;
+});
+
+/* ======== BETS ======== */
+let balance=1000, chip=10, bets={}, undo=[], lastBets={};
+const balEl=document.getElementById('bal');
+function upBal(){ balEl.textContent=balance.toFixed(0); } upBal();
+
+document.getElementById('chips').addEventListener('click',(e)=>{
+  const c=e.target.closest('.chip'); if(!c) return;
+  document.querySelectorAll('.chip').forEach(x=>x.classList.remove('sel'));
+  c.classList.add('sel'); chip=parseInt(c.dataset.v,10);
+});
+
+function keyFor(el){ const t=el.dataset;
+  if(t.num!==undefined) return `n:${t.num}`;
+  if(t.color) return `c:${t.color}`;
+  if(t.eo) return `e:${t.eo}`;
+  if(t.lh) return `l:${t.lh}`;
+  if(t.dozen) return `d:${t.dozen}`;
+  if(t.col) return `col:${t.col}`;
+  return '';
+}
+function addBadge(el,amt){ let b=el.querySelector('.bet-badge'); if(!b){ b=document.createElement('div'); b.className='bet-badge'; el.appendChild(b); } b.textContent=amt; }
+function clearBadges(){ Object.values(cells).forEach(el=>{ const b=el?.querySelector?.('.bet-badge'); if(b) b.remove(); }); }
+
+document.addEventListener('click', (e)=>{
+  const el=e.target.closest('.cell,.outside'); if(!el) return;
+  const k=keyFor(el); if(!k) return;
+  if(balance<chip){ el.animate([{filter:'brightness(1)'},{filter:'brightness(1.25)'},{filter:'brightness(1)'}],{duration:350}); return; }
+  balance-=chip; bets[k]=(bets[k]||0)+chip; addBadge(el,bets[k]); undo.push({k,amt:chip}); upBal();
+});
+
+/* ======== SPIN / ACCURATE LANDING ======== */
+let wheelAngle=0;                          // current wheel rotation
+const BALL_ANGLE=0;                        // screen angle where ball sits (right side)
+function norm(a){ a%=360; if(a<0) a+=360; return a; }
+function pocketMid(idx){ return (idx+0.5)*SWEEP - 90; }
+function easeOutCubic(t){ return 1-Math.pow(1-t,3); }
+
+function placeBall(){ const rim=wheel.offsetWidth*0.42; ball.style.transform=`translate(${rim}px,-10px)`; }
+addEventListener('resize',placeBall); placeBall();
+
+function spinToIndex(idx, ms, done){
+  const need = norm(BALL_ANGLE - pocketMid(idx));
+  const from=wheelAngle, to=wheelAngle + 6*360 + need;
   const t0=performance.now();
-
   function frame(now){
     const p=Math.min(1,(now-t0)/ms), e=easeOutCubic(p);
-    const ang = from + (to-from)*e;
-    wheel.style.transform = `rotate(${ang}deg)`;
-    const wobble = (1-e)*30;                           // visual roll that decays to 0
-    orbit.style.transform = `rotate(${-(ang) + wobble}deg)`; // keep ball fixed!
-    if(p<1){ requestAnimationFrame(frame); }
+    const ang=from+(to-from)*e;
+    wheel.style.transform=`rotate(${ang}deg)`;
+    orbit.style.transform=`rotate(${-(ang)}deg)`; // counter-rotate keeps ball fixed
+    if(p<1) requestAnimationFrame(frame);
     else { wheelAngle=norm(to); orbit.style.transform=`rotate(${-wheelAngle}deg)`; done(); }
   }
   requestAnimationFrame(frame);
 }
 
-/* Demo button */
-let spinning=false;
-spinBtn.addEventListener('click',()=>{
-  if(spinning) return; spinning=true; spinBtn.disabled=true; spinBtn.textContent='SPINNING…';
-  const idx=Math.floor(Math.random()*ORDER.length); const n=ORDER[idx];
-  spinToIndex(idx, 2400, ()=>{ badge.textContent=n; lastEl.textContent=n; spinBtn.disabled=false; spinBtn.textContent='SPIN'; spinning=false; });
+/* payouts */
+function settle(n){
+  let win=0;
+  for(const [k,amt] of Object.entries(bets)){
+    const [t,v]=k.split(':');
+    if(t==='n' && parseInt(v,10)===n) win+=amt*36;
+    if(t==='c' && n!==0){
+      if(v==='purple' && PURPLE.has(n)) win+=amt*2;
+      if(v==='gold'   && GOLD_SET.has(n)) win+=amt*2;
+    }
+    if(t==='e' && n!==0){
+      if(v==='even' && n%2===0) win+=amt*2;
+      if(v==='odd'  && n%2===1) win+=amt*2;
+    }
+    if(t==='l' && n!==0){
+      if(v==='low'  && n<=18) win+=amt*2;
+      if(v==='high' && n>=19) win+=amt*2;
+    }
+    if(t==='d' && n!==0){
+      const d=parseInt(v,10);
+      if((d===1 && n<=12) || (d===2 && n>=13 && n<=24) || (d===3 && n>=25)) win+=amt*3;
+    }
+    if(t==='col' && n!==0){
+      const col = ((n-1)%3)+1; if(parseInt(v,10)===col) win+=amt*3;
+    }
+  }
+  bets={}; undo=[]; clearBadges();
+  if(win>0){ balance+=win; }
+  upBal();
+}
+
+/* spin button */
+const spinBtn=document.getElementById('spin');
+spinBtn.addEventListener('click', ()=>{
+  spinBtn.disabled=true; lastBets={...bets};
+  const idx=Math.floor(Math.random()*ORDER.length);
+  const n=ORDER[idx];
+  spinToIndex(idx, 2400, ()=>{
+    badge.textContent=n; lastEl.textContent=n; settle(n); spinBtn.disabled=false;
+  });
 });
 
-/* Public API (for your server result) */
-window.FastWheel={
-  spinTo(num){
-    const idx=ORDER.indexOf(Number(num)); if(idx<0) return false;
-    spinToIndex(idx, 2400, ()=>{ badge.textContent=num; lastEl.textContent=num; });
-    return true;
-  },
-  spinRandom(){
-    const idx=Math.floor(Math.random()*ORDER.length), n=ORDER[idx];
-    spinToIndex(idx, 2400, ()=>{ badge.textContent=n; lastEl.textContent=n; });
-    return n;
-  }
+/* API to drive from server */
+window.PurpleGoldWheel = {
+  spinTo(num){ const idx=ORDER.indexOf(Number(num)); if(idx<0) return false;
+    spinBtn.disabled=true; spinToIndex(idx,2400,()=>{ badge.textContent=num; lastEl.textContent=num; settle(num); spinBtn.disabled=false; }); return true; },
+  spinRandom(){ const idx=Math.floor(Math.random()*ORDER.length), n=ORDER[idx];
+    spinBtn.disabled=true; spinToIndex(idx,2400,()=>{ badge.textContent=n; lastEl.textContent=n; settle(n); spinBtn.disabled=false; }); return n; }
 };
+
+/* quick demo chips interaction exists above */
 </script>
 </body>
 </html>
