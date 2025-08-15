@@ -1,135 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Premium Roulette</title>
-<style>
-:root{
-  --bg:#0c5a41; --ink:#f7f7f4; --muted:#cfe5da; --shadow:0 18px 40px rgba(0,0,0,.45);
-  --red:#b91c1c; --red-deep:#7a1111; --black1:#1b1b1b; --black2:#0c0c0c; --zero:#0aa56e;
-  --wood1:#a36a2d; --wood2:#6e3d14; --wood-ring:#3b200d;
-}
-*{box-sizing:border-box} html,body{height:100%}
-body{
-  margin:0; color:var(--ink); background:var(--bg);
-  font-family:Inter,ui-sans-serif,-apple-system,Segoe UI,Roboto,Arial;
-  background-image:radial-gradient(1400px 700px at -20% -10%,#0c7b5a22,transparent 60%),radial-gradient(1600px 800px at 120% 0%,#178c6930,transparent 60%);
-}
-.container{max-width:1160px;margin:10px auto;padding:10px}
-
-/* header */
-.hband{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:14px;background:linear-gradient(180deg,#184f3d,#0d2c23);border:1px solid #ffffff18;box-shadow:var(--shadow);margin-bottom:12px}
-.brand{font-family:Georgia,serif;font-weight:900;font-size:28px;letter-spacing:.5px;color:#f3e7bf}
-.balance{font-weight:800}
-
-/* layout */
-.grid{display:grid;gap:14px;grid-template-columns:1fr}
-@media (min-width:980px){ .grid{grid-template-columns:1.1fr .9fr} }
-.card{background:linear-gradient(180deg,#145340,#0b2e25);border:1px solid #ffffff18;border-radius:18px;padding:14px;box-shadow:var(--shadow)}
-
-/* WHEEL */
-.wcard{background:linear-gradient(180deg, #d6a24a, #ae7f2f); border-radius:22px; padding:14px; box-shadow:inset 0 2px 16px #0004, var(--shadow)}
-.wheel-wrap{background:linear-gradient(180deg,#163c2f,#0d2a22);border-radius:18px;padding:16px;border:1px solid #0006}
-.wheel{
-  width:100%;max-width:540px;aspect-ratio:1;margin:auto;border-radius:50%;position:relative;overflow:hidden;
-  background:
-    radial-gradient(circle at 50% 45%, #d9a55a 0 30%, #bb7b2e 31% 55%, transparent 56%),
-    radial-gradient(circle at 50% 50%, var(--wood1) 0, var(--wood2) 45%, var(--wood-ring) 70%);
-  box-shadow:inset 0 0 0 12px #5b2e12,inset 0 0 0 28px #8a4a1d,0 14px 30px rgba(0,0,0,.6);
-  will-change:transform; transform:translateZ(0)
-}
-.wheel svg{position:absolute;inset:0;width:100%;height:100%}
-.hub{
-  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:28%;height:28%;
-  border-radius:50%;display:grid;place-items:center;z-index:3;
-  background:radial-gradient(circle at 35% 35%,#f7e6b5,#d4b46a 55%,#a78333 70%,#6b521b);
-  box-shadow:inset 0 2px 6px rgba(255,255,255,.45),0 10px 26px rgba(0,0,0,.65)
-}
-.badge{font:800 30px/1 Georgia,serif;color:#1c1606;background:linear-gradient(180deg,#f3e4b2,#d6b86f);padding:8px 14px;border-radius:999px;border:1px solid #0003}
-.peg{position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:16px;height:22px;border-radius:8px;z-index:4;background:radial-gradient(circle at 50% 20%,#fff,#e7d48a 60%,#6d521b);box-shadow:0 6px 14px rgba(0,0,0,.65)}
-.orbit{position:absolute;inset:0;transform-origin:50% 50%;z-index:5;pointer-events:none;will-change:transform}
-.ball{position:absolute;left:50%;top:50%;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,#f7e5b8 60%,#caa85a);box-shadow:0 4px 8px rgba(0,0,0,.45)}
-
-/* controls + history */
-.controls{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:12px}
-.btn{padding:12px 18px;border-radius:999px;border:1px solid #0004;background:linear-gradient(180deg,#f1cd72,#d1a54a);color:#1f1809;font-weight:900;letter-spacing:.5px;cursor:pointer;box-shadow:0 12px 20px rgba(0,0,0,.35),inset 0 -2px 0 #0003}
-.history{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px}
-.hpill{padding:4px 8px;border-radius:999px;border:1px solid #ffffff22;font-weight:800;font-size:12px}
-.hpill.red{background:#3a1512;color:#ffd4d0}.hpill.black{background:#101010;color:#ededed}.hpill.green{background:#0e4c35;color:#dff9ea}
-
-/* TABLE */
-.table{background:linear-gradient(180deg,#123c2e,#0d2a22);border:1px solid #ffffff18;border-radius:16px;padding:12px;box-shadow:inset 0 0 0 2px #0000002a}
-.board{display:grid;gap:6px;grid-template-columns:60px repeat(12,1fr);grid-auto-rows:50px}
-.cell{display:grid;place-items:center;font-weight:800;border-radius:12px;cursor:pointer;position:relative;border:1px solid #0006;color:#fff;text-shadow:0 1px 0 #0006}
-.cell.red{background:linear-gradient(180deg,var(--red),var(--red-deep))}
-.cell.black{background:linear-gradient(180deg,var(--black1),var(--black2))}
-.cell.zero{background:linear-gradient(180deg,#0fc080,#0a8d60)}
-
-.outside-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
-.outside{display:grid;place-items:center;border-radius:12px;cursor:pointer;font-weight:800;border:1px solid #0006;padding:10px 8px;background:linear-gradient(180deg,#244e41,#17382e)}
-.outside.special{background:linear-gradient(180deg,#f3c85f,#c79f3c);color:#2a2006}
-.bet-badge{position:absolute;bottom:6px;right:6px;pointer-events:none;font-size:12px;font-weight:800;padding:4px 6px;border-radius:10px;background:#0b2e25;border:1px solid #ffffff22}
-
-/* chips */
-.chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:12px}
-.chip{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;cursor:pointer;font-weight:900;color:#111;position:relative;border:6px double #0005;box-shadow:0 12px 20px rgba(0,0,0,.4),inset 0 0 0 3px #fff6}
-.chip:before{content:"";position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(from 0deg,#0004 0 6deg,transparent 6deg 18deg);mask:radial-gradient(circle,transparent 58%,#000 59%)}
-.chip>span{position:relative;z-index:1;text-shadow:0 1px 0 #fff8}
-.chip.sel{outline:3px solid #fff9;outline-offset:2px;transform:translateY(-1px)}
-.chip[data-v="1"]{background:#2e7d32;color:#fff}
-.chip[data-v="5"]{background:#c0392b;color:#fff}
-.chip[data-v="10"]{background:#2980b9;color:#fff}
-.chip[data-v="25"]{background:#8e44ad;color:#fff}
-.chip[data-v="50"]{background:#1e1e1e;color:#f1f1f1}
-.chip[data-v="100"]{background:#f1c40f;color:#1b1607}
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"/>
+  <title>Roulette</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="container">
   <div class="hband">
-    <div class="brand">ROULETTE</div>
-    <div class="balance">Balance: <strong id="bal">1000</strong></div>
+    <button class="back" onclick="history.back()" aria-label="Back">←</button>
+    <h1>Roulette</h1>
+    <div class="dots" aria-hidden="true">⋯</div>
   </div>
 
-  <div class="grid">
-    <!-- Wheel -->
-    <div class="card wcard">
+  <main class="grid">
+    <!-- WHEEL -->
+    <section class="card wcard">
       <div class="wheel-wrap">
         <div class="wheel" id="wheel">
-          <svg viewBox="0 0 100 100" id="wheelSvg"></svg>
+          <svg viewBox="0 0 100 100" id="wheelSvg" aria-hidden="true"></svg>
           <div class="orbit" id="orbit"><div class="ball" id="ball"></div></div>
           <div class="hub"><div class="badge" id="badge">—</div></div>
           <div class="peg"></div>
         </div>
+
         <div class="controls">
           <button class="btn" id="spin">SPIN</button>
           <button class="btn" id="rebet">REBET</button>
           <button class="btn" id="double">DOUBLE</button>
           <button class="btn" id="undo">UNDO</button>
-          <button class="btn" id="clear">CLEAR</button>
+          <button class="btn ghost" id="clear">CLEAR</button>
         </div>
-        <div class="history" id="history"></div>
-      </div>
-    </div>
 
-    <!-- Table -->
-    <div class="card table">
-      <div class="board" id="board"></div>
+        <div class="meta">
+          <div class="balance">Balance: <strong id="bal">1000</strong></div>
+          <div class="history" id="history"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TABLE -->
+    <section class="card table">
+      <div class="board" id="board">
+        <!-- 0 je visoka ćelija; 1–36 generiše JS -->
+        <div class="cell zero" data-type="straight" data-num="0" style="grid-row:1 / span 3; grid-column:1;">0</div>
+      </div>
+
+      <!-- Dozens -->
       <div class="outside-row">
         <div class="outside" data-type="dozen" data-dozen="1">1st 12</div>
         <div class="outside" data-type="dozen" data-dozen="2">2nd 12</div>
         <div class="outside" data-type="dozen" data-dozen="3">3rd 12</div>
+      </div>
+
+      <!-- Even chances -->
+      <div class="outside-row">
+        <div class="outside" data-type="lowhigh" data-lh="low">1–18</div>
         <div class="outside" data-type="evenodd" data-eo="even">EVEN</div>
         <div class="outside special" data-type="color" data-color="red">RED</div>
-        <div class="outside" data-type="lowhigh" data-lh="low">1–18</div>
         <div class="outside special" data-type="color" data-color="black">BLACK</div>
         <div class="outside" data-type="evenodd" data-eo="odd">ODD</div>
         <div class="outside" data-type="lowhigh" data-lh="high">19–36</div>
-        <div class="outside" data-type="column" data-col="1">2 to 1 (col 1)</div>
-        <div class="outside" data-type="column" data-col="2">2 to 1 (col 2)</div>
-        <div class="outside" data-type="column" data-col="3">2 to 1 (col 3)</div>
       </div>
+
+      <!-- Columns -->
+      <div class="outside-row">
+        <div class="outside" data-type="column" data-col="1">2 to 1</div>
+        <div class="outside" data-type="column" data-col="2">2 to 1</div>
+        <div class="outside" data-type="column" data-col="3">2 to 1</div>
+      </div>
+
+      <!-- Chips -->
       <div class="chips" id="chips">
         <div class="chip sel" data-v="1"><span>1</span></div>
         <div class="chip" data-v="5"><span>5</span></div>
@@ -138,49 +79,9 @@ body{
         <div class="chip" data-v="50"><span>50</span></div>
         <div class="chip" data-v="100"><span>100</span></div>
       </div>
-    </div>
-  </div>
-</div>
+    </section>
+  </main>
 
-<script>
-/* ===== Data ===== */
-const ORDER=[0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
-const RED = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
-const BLACK = new Set(Array.from({length:36},(_,i)=>i+1).filter(n=>!RED.has(n)));
-const SWEEP = 360/ORDER.length; const BALL_ANGLE=0;
-
-/* ===== Elements ===== */
-const wheel=document.getElementById('wheel'), svg=document.getElementById('wheelSvg'), orbit=document.getElementById('orbit'), ball=document.getElementById('ball');
-const spinBtn=document.getElementById('spin'), badge=document.getElementById('badge'), hist=document.getElementById('history');
-const board=document.getElementById('board'), chips=document.getElementById('chips'), balEl=document.getElementById('bal');
-const rebetBtn=document.getElementById('rebet'), doubleBtn=document.getElementById('double'), undoBtn=document.getElementById('undo'), clearBtn=document.getElementById('clear');
-
-/* ===== Helpers ===== */
-const norm=a=>(a%=360,a<0?a+360:a); const mid=i=>(i+0.5)*SWEEP-90; const ease=t=>1-Math.pow(1-t,3);
-
-/* ===== Build wheel ===== */
-(function buildWheel(){
-  const cx=50,cy=50,rO=49,rI=32,rT=41;
-  function polar(r,a){a*=Math.PI/180;return{x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)}}
-  function ann(r0,r1,a0,a1){const p1=polar(r1,a0),p2=polar(r1,a1),p3=polar(r0,a1),p4=polar(r0,a0),la=(a1-a0)<=180?0:1;
-    return `M ${p1.x} ${p1.y} A ${r1} ${r1} 0 ${la} 1 ${p2.x} ${p2.y} L ${p3.x} ${p3.y} A ${r0} ${r0} 0 ${la} 0 ${p4.x} ${p4.y} Z`;}
-  ORDER.forEach((n,i)=>{
-    const a0=i*SWEEP-90,a1=a0+SWEEP,m=(a0+a1)/2, fill = n===0 ? '#0aa56e' : (RED.has(n)?'#b91c1c':'#111');
-    const p=document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d',ann(rI,rO,a0,a1));
-    p.setAttribute('fill',fill); p.setAttribute('stroke','#111'); p.setAttribute('stroke-width','0.25'); svg.appendChild(p);
-    const t=document.createElementNS('http://www.w3.org/2000/svg','text'), pos=polar(rT,m);
-    t.setAttribute('x',pos.x); t.setAttribute('y',pos.y+2); t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','4.2'); t.setAttribute('font-weight','800');
-    t.setAttribute('fill', n===0 ? '#e6fff4' : (RED.has(n)?'#fff':'#ededed')); t.setAttribute('transform',`rotate(${m+90},${pos.x},${pos.y})`); t.textContent=n; svg.appendChild(t);
-  });
-})();
-
-/* ===== Build table ===== */
-const cells={};
-(function buildBoard(){
-  const z=document.createElement('div'); z.className='cell zero'; z.textContent='0'; z.style.gridRow='1 / span 3'; z.style.gridColumn='1';
-  z.dataset.type='straight'; z.dataset.num='0'; board.appendChild(z); cells['n:0']=z;
-  for(let col=0; col<12; col++){
-    for(let r=2; r>=0; r--){
-      const n=col*3+(3-r);
-      const d=document.createElement('div');
-      d.className=`cell ${
+  <script src="app.js"></script>
+</body>
+</html>
