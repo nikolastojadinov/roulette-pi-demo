@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Roulette V3 (single file)</title>
+  <style>
+    :root{ --bg:#0e0f12; --panel:#151720; --text:#e8e9ef; --muted:#a6adbb; --accent:#ffcc4d; --accent-2:#e5a10a; }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{ margin:0; color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Arial;
+      background:radial-gradient(1200px 1200px at 50% -200px,#1a1c24 0,#0e0f12 60%,#0b0c10 100%);}
+    .app{max-width:980px;margin:24px auto 48px;padding:0 16px}
+    .title{font-weight:800;margin:8px 0 18px;letter-spacing:.5px}
+    .version{font-size:12px;color:#ffd86b;margin-left:8px;vertical-align:middle;background:#2b220a;padding:2px 6px;border-radius:6px}
+    .wheel-wrap{ position:relative;width:min(92vw,700px);height:min(92vw,700px);margin:0 auto;display:grid;place-items:center;border-radius:20px;
+      background:radial-gradient(60% 60% at 50% 40%, #181a22 0, transparent 60%), radial-gradient(80% 80% at 50% 50%, #101218 0, transparent 70%);}
+    #wheel{width:100%;height:100%;display:block;border-radius:50%;filter:drop-shadow(0 30px 60px rgba(0,0,0,.45))}
+    .pointer{ position:absolute;top:4%;left:50%;transform:translateX(-50%);width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;
+      border-bottom:28px solid #00ffe0; /* neon tirkizno da odmah vidiš novu verziju */
+      filter:drop-shadow(0 6px 8px rgba(0,0,0,.6));z-index:3;border-radius:4px}
+    .panel{ margin:18px auto 0;padding:14px 16px;background:linear-gradient(180deg,#171923,#101218);border:1px solid #232533;border-radius:12px;
+      max-width:700px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .controls{display:flex;gap:10px}
+    .btn{border:0;background:linear-gradient(180deg,var(--accent) 0,var(--accent-2) 100%);color:#1b1200;font-weight:800;padding:12px 18px;border-radius:10px;cursor:pointer;transition:transform .05s ease}
+    .btn:active{transform:translateY(1px) scale(.99)}
+    .btn-ghost{background:transparent;color:var(--muted);border:1px solid #2a2c3a}
+    .result{display:flex;gap:18px;align-items:center}
+    .badge{font-size:12px;color:#b9bfd0;background:#202331;border:1px solid #2b2e3d;padding:4px 8px;border-radius:6px;margin-right:8px}
+    .value{font-weight:800;font-variant-numeric:tabular-nums}
+    .footer{text-align:center;color:#8b92a6;margin-top:14px}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1 class="title">Roulette <span class="version">V3</span></h1>
+
+    <section class="wheel-wrap">
+      <canvas id="wheel" width="700" height="700"></canvas>
+      <div class="pointer"></div>
+    </section>
+
+    <section class="panel">
+      <div class="controls">
+        <button id="spinBtn" class="btn">Spin</button>
+        <button id="resetBtn" class="btn btn-ghost">Reset</button>
+      </div>
+      <div class="result">
+        <div><span class="badge">Broj</span><span id="winNumber" class="value">—</span></div>
+        <div><span class="badge">Boja</span><span id="winColor" class="value">—</span></div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <small>European roulette (single zero) • physics-style spin &amp; ball</small>
+    </footer>
+  </main>
+
+  <script>
+    // --- VERSION MARKER ---
+    console.log('Loaded FULL ROULETTE V3 ✅');
+
+    // --- CONFIG ---
+    const NUMBERS = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+    const REDS = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+
+    // --- CANVAS ---
+    const C = document.getElementById('wheel'); const ctx = C.getContext('2d');
+    const DPR = window.devicePixelRatio || 1; // oštriji tekst na telefonu
+    if (DPR !== 1) { C.width *= DPR; C.height *= DPR; ctx.scale(DPR, DPR); }
+    const W=700, H=700, CX=W/2, CY=H/2;
+    const R_OUT=Math.min(W,H)*0.47, R_POUT=R_OUT*0.88, R_PIN=R_OUT*0.63, R_HUB_OUT=R_OUT*0.45, R_HUB_IN=R_OUT*0.18, R_BALL=R_OUT*0.022;
+    const SLICE=(Math.PI*2)/NUMBERS.length, TAU=Math.PI*2; const mod=(n,m)=>((n%m)+m)%m;
+
+    // --- STATE ---
+    let wheelA=0,wheelV=0,spinning=false; let ballA=-Math.PI/2,ballV=0,ballR=(R_POUT+R_PIN)/2,ballFall=false;
+
+    const ui={ spin:document.getElementById('spinBtn'), reset:document.getElementById('resetBtn'),
+      winNum:document.getElementById('winNumber'), winColor:document.getElementById('winColor')};
+
+    // --- DRAW ---
+    const colorFor=n=>n===0?'#1aa34a':(REDS.has(n)?'#cc2a2a':'#0d0d0d');
+
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      const g=ctx.createRadialGradient(CX,CY,R_OUT*0.2,CX,CY,R_OUT);
+      g.addColorStop(0,'#ffcf5a'); g.addColorStop(0.6,'#e9b643'); g.addColorStop(0.9,'#b57919'); g.addColorStop(1,'#6e4710');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(CX,CY,R_OUT,0,TAU); ctx.fill();
+
+      const wood=ctx.createRadialGradient(CX,CY,R_POUT*0.3,CX,CY,R_POUT);
+      wood.addColorStop(0,'#c97925'); wood.addColorStop(1,'#8b4f16');
+      ctx.beginPath(); ctx.fillStyle=wood; ctx.arc(CX,CY,R_POUT,0,TAU); ctx.arc(CX,CY,R_PIN,0,TAU,true); ctx.closePath(); ctx.fill();
+
+      ctx.save(); ctx.translate(CX,CY); ctx.rotate(wheelA);
+      for(let i=0;i<NUMBERS.length;i++){
+        const start=-Math.PI/2+i*SLICE, mid=start+SLICE/2;
+
+        ctx.beginPath(); ctx.fillStyle=colorFor(NUMBERS[i]);
+        ctx.arc(0,0,R_POUT,start,start+SLICE); ctx.arc(0,0,R_PIN,start+SLICE,start,true); ctx.closePath(); ctx.fill();
+
+        ctx.strokeStyle='rgba(255,255,255,.45)'; ctx.lineWidth=Math.max(1,R_OUT*0.004);
+        ctx.beginPath(); ctx.moveTo(Math.cos(start)*R_POUT,Math.sin(start)*R_POUT); ctx.lineTo(Math.cos(start)*R_PIN,Math.sin(start)*R_PIN); ctx.stroke();
+
+        ctx.save(); ctx.rotate(mid);
+        ctx.fillStyle=NUMBERS[i]===0?'#0b1d0f':'#f3f3f3';
+        ctx.font=`${Math.floor(R_OUT*0.06)}px system-ui, Arial`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.translate(0,(R_PIN+R_POUT)/2); ctx.rotate(Math.PI/2);
+        ctx.fillText(String(NUMBERS[i]),0,0);
+        ctx.restore();
+      }
+
+      ctx.beginPath(); ctx.fillStyle=wood; ctx.arc(0,0,R_HUB_OUT,0,TAU); ctx.arc(0,0,R_HUB_IN,0,TAU,true); ctx.fill();
+
+      const brass=ctx.createRadialGradient(0,0,R_HUB_IN*0.1,0,0,R_HUB_IN);
+      brass.addColorStop(0,'#ffe39a'); brass.addColorStop(0.7,'#d2a33a'); brass.addColorStop(1,'#845d13');
+      ctx.fillStyle=brass; ctx.beginPath(); ctx.arc(0,0,R_HUB_IN,0,TAU); ctx.fill();
+      ctx.restore();
+
+      ctx.save(); ctx.translate(CX,CY);
+      const r=ballFall?(R_PIN+R_HUB_OUT)/2:ballR;
+      const x=Math.cos(ballA)*r, y=Math.sin(ballA)*r;
+      const bg=ctx.createRadialGradient(x-R_BALL*0.3,y-R_BALL*0.3,R_BALL*0.1,x,y,R_BALL);
+      bg.addColorStop(0,'#fff7dd'); bg.addColorStop(1,'#bba46b');
+      ctx.fillStyle=bg; ctx.beginPath(); ctx.arc(x,y,R_BALL,0,TAU); ctx.fill();
+      ctx.restore();
+    }
+
+    // --- ANIM ---
+    let last=performance.now();
+    function tick(now){
+      const dt=Math.min(0.033,(now-last)/1000); last=now;
+      if(spinning){
+        wheelA=mod(wheelA+wheelV*dt,TAU); wheelV*=0.995;
+        ballA =mod(ballA -ballV *dt,TAU); ballV *=0.992;
+        if(!ballFall && wheelV<0.8) ballFall=true;
+        if(ballFall){
+          ballR -= ((R_POUT+R_PIN)/2 - (R_HUB_OUT*0.75))*dt*0.5;
+          if(ballR<(R_PIN+R_HUB_OUT)/2) ballR=(R_PIN+R_HUB_OUT)/2;
+        }
+        if(wheelV<0.15 && ballV<0.15){ spinning=false; snapToWin(); }
+      }
+      draw(); requestAnimationFrame(tick);
+    }
+
+    function spin(){ if(spinning) return;
+      wheelV=6+Math.random()*2; ballV=11+Math.random()*3;
+      ballR=(R_POUT+R_PIN)/2; ballFall=false; spinning=true;
+      ui.winNum.textContent='…'; ui.winColor.textContent='…';
+    }
+    function reset(){ spinning=false; wheelA=0; wheelV=0; ballA=-Math.PI/2; ballV=0; ballR=(R_POUT+R_PIN)/2; ballFall=false;
+      ui.winNum.textContent='—'; ui.winColor.textContent='—'; draw(); }
+    function snapToWin(){
+      const pointer=-Math.PI/2; let best=0,dist=1e9;
+      for(let i=0;i<NUMBERS.length;i++){
+        const c=-Math.PI/2 + i*SLICE + wheelA + SLICE/2;
+        const d=Math.abs(Math.atan2(Math.sin(c-pointer),Math.cos(c-pointer)));
+        if(d<dist){dist=d;best=i;}
+      }
+      const n=NUMBERS[best]; const color = n===0?'Zeleno':(REDS.has(n)?'Crveno':'Crno');
+      const center=-Math.PI/2 + best*SLICE + wheelA + SLICE/2;
+      ballA=center; ballFall=true; ballR=(R_PIN+R_HUB_OUT)/2;
+      ui.winNum.textContent=String(n); ui.winColor.textContent=color;
+    }
+
+    const ui={ spin:document.getElementById('spinBtn'), reset:document.getElementById('resetBtn'),
+      winNum:document.getElementById('winNumber'), winColor:document.getElementById('winColor') };
+    ui.spin.addEventListener('click',spin); ui.reset.addEventListener('click',reset);
+    draw(); requestAnimationFrame(tick);
+  </script>
+</body>
+</html>
