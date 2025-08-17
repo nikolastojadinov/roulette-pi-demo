@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Roulette</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <h1 class="title">ROULETTE</h1>
+
+    <section class="wheel-wrap">
+      <canvas id="wheel" width="700" height="700" aria-label="Roulette wheel"></canvas>
+      <div class="pointer" aria-hidden="true"></div>
+    </section>
+
+    <section class="panel">
+      <button id="spinBtn" class="btn btn-primary">SPIN</button>
+      <button id="resetBtn" class="btn btn-ghost">RESET</button>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">BROJ</div>
+          <div id="winNumber" class="stat-value">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">BOJA</div>
+          <div id="winColor" class="stat-value">—</div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <small>European roulette (single zero) • physics-style spin & ball</small>
+    </footer>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
