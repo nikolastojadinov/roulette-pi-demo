@@ -1,87 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"/>
-  <title>Roulette</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <div class="hband">
-    <button class="back" onclick="history.back()" aria-label="Back">←</button>
-    <h1>Roulette</h1>
-    <div class="dots" aria-hidden="true">⋯</div>
-  </div>
+<html lang="sr">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>Roulette Wheel</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <h1 class="title">Roulette</h1>
 
-  <main class="grid">
-    <!-- WHEEL -->
-    <section class="card wcard">
-      <div class="wheel-wrap">
-        <div class="wheel" id="wheel">
-          <svg viewBox="0 0 100 100" id="wheelSvg" aria-hidden="true"></svg>
-          <div class="orbit" id="orbit"><div class="ball" id="ball"></div></div>
-          <div class="hub"><div class="badge" id="badge">—</div></div>
-          <div class="peg"></div>
-        </div>
+      <section class="wheel-wrap">
+        <!-- Platno na kojem crtamo točak i kuglicu -->
+        <canvas id="wheel" width="700" height="700"></canvas>
+        <!-- Fiksni pokazivač gore (12h) -->
+        <div class="pointer"></div>
+      </section>
 
+      <section class="panel">
         <div class="controls">
-          <button class="btn" id="spin">SPIN</button>
-          <button class="btn" id="rebet">REBET</button>
-          <button class="btn" id="double">DOUBLE</button>
-          <button class="btn" id="undo">UNDO</button>
-          <button class="btn ghost" id="clear">CLEAR</button>
+          <button id="spinBtn" class="btn">Spin</button>
+          <button id="resetBtn" class="btn btn-ghost">Reset</button>
         </div>
 
-        <div class="meta">
-          <div class="balance">Balance: <strong id="bal">1000</strong></div>
-          <div class="history" id="history"></div>
+        <div class="result">
+          <div>
+            <span class="badge">Broj</span>
+            <span id="winNumber" class="value">—</span>
+          </div>
+          <div>
+            <span class="badge">Boja</span>
+            <span id="winColor" class="value">—</span>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- TABLE -->
-    <section class="card table">
-      <div class="board" id="board">
-        <!-- 0 je visoka ćelija; 1–36 generiše JS -->
-        <div class="cell zero" data-type="straight" data-num="0" style="grid-row:1 / span 3; grid-column:1;">0</div>
-      </div>
+      <footer class="footer">
+        <small>European roulette (single zero) • physics-style spin & ball</small>
+      </footer>
+    </main>
 
-      <!-- Dozens -->
-      <div class="outside-row">
-        <div class="outside" data-type="dozen" data-dozen="1">1st 12</div>
-        <div class="outside" data-type="dozen" data-dozen="2">2nd 12</div>
-        <div class="outside" data-type="dozen" data-dozen="3">3rd 12</div>
-      </div>
-
-      <!-- Even chances -->
-      <div class="outside-row">
-        <div class="outside" data-type="lowhigh" data-lh="low">1–18</div>
-        <div class="outside" data-type="evenodd" data-eo="even">EVEN</div>
-        <div class="outside special" data-type="color" data-color="red">RED</div>
-        <div class="outside special" data-type="color" data-color="black">BLACK</div>
-        <div class="outside" data-type="evenodd" data-eo="odd">ODD</div>
-        <div class="outside" data-type="lowhigh" data-lh="high">19–36</div>
-      </div>
-
-      <!-- Columns -->
-      <div class="outside-row">
-        <div class="outside" data-type="column" data-col="1">2 to 1</div>
-        <div class="outside" data-type="column" data-col="2">2 to 1</div>
-        <div class="outside" data-type="column" data-col="3">2 to 1</div>
-      </div>
-
-      <!-- Chips -->
-      <div class="chips" id="chips">
-        <div class="chip sel" data-v="1"><span>1</span></div>
-        <div class="chip" data-v="5"><span>5</span></div>
-        <div class="chip" data-v="10"><span>10</span></div>
-        <div class="chip" data-v="25"><span>25</span></div>
-        <div class="chip" data-v="50"><span>50</span></div>
-        <div class="chip" data-v="100"><span>100</span></div>
-      </div>
-    </section>
-  </main>
-
-  <script src="app.js"></script>
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>
